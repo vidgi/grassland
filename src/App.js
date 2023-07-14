@@ -1,9 +1,9 @@
 import "./App.css";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 import { Canvas } from "react-three-fiber";
-import { Loader, Html, FirstPersonControls, OrbitControls } from "@react-three/drei";
+import { Loader, Html, FirstPersonControls, Plane, OrbitControls } from "@react-three/drei";
 
 function shuffle(array) {
   let currentIndex = array.length,
@@ -40,7 +40,7 @@ function App() {
   imageData = shuffle(imageData);
 
   var viewportData = [
-    [0, 10, 60],
+    [0, 0, 60],
     [0, -50, 60],
     [0, -20, 60],
     [0, 20, 60],
@@ -49,60 +49,73 @@ function App() {
   // viewportData = shuffle(viewportData);
 
   var namesList = imageData.map(function (_, index) {
-    return <FeaturedImage position={[-50 + index * 10, 0, getRandomInt(20)]} data={imageData[index]} />;
+    return <FeaturedImage key={index + "grass0"} position={[-50 + index * 10, -11, getRandomInt(20)]} data={imageData[index]} />;
   });
 
   var grasses = imageData.map(function (_, index) {
-    return <FeaturedImage position={[getRandomInt(50), getRandomInt(20), getRandomInt(20)]} data={imageData[index]} />;
+    return <FeaturedImage key={index + "grass1"} position={[getRandomInt(50), -11, getRandomInt(20)]} data={imageData[index]} />;
   });
 
   var grasses2 = imageData.map(function (_, index) {
-    return <FeaturedImage position={[-50 + getRandomInt(50), getRandomInt(20), getRandomInt(40)]} data={imageData[index]} />;
+    return <FeaturedImage key={index + "grass2"} position={[-50 + getRandomInt(50), -11, getRandomInt(40)]} data={imageData[index]} />;
   });
 
   var grasses3 = imageData.map(function (_, index) {
-    return <FeaturedImage position={[-20 + getRandomInt(50), getRandomInt(20), getRandomInt(40)]} data={imageData[index]} />;
+    return <FeaturedImage key={index + "grass3"} position={[-20 + getRandomInt(50), -11, getRandomInt(40)]} data={imageData[index]} />;
   });
+
+  // document.addEventListener('keyup', event => {
+  //   if (event.code === 'Space') {
+  //     console.log('Space pressed')
+  //   }
+  // })
+
+  const [isFirstPersonControls, setFirstPersonControls] = useState(true);
+
+  // const toggleControls() => {
+  //   setFirstPersonControls(!isFirstPersonControls);
+  // };
+
+  const handleSpace = (e) => {
+    if (e.code === "Space") {
+      // toggleControls();
+      setFirstPersonControls(!isFirstPersonControls);
+
+      console.log("Space pressed");
+    }
+  };
 
   return (
     <div className="App">
       {/* <Canvas camera={{ fov: 75, position: [0, -30, 10] }} style={{ height: "100vh", width: "100vw" }}> */}
-      <Canvas camera={{ fov: 75, position: viewportData[0] }} style={{ height: "100vh", width: "100vw" }}>
+      <Canvas onKeyDown={handleSpace} camera={{ fov: 75, position: viewportData[0] }} style={{ height: "100vh", width: "100vw" }}>
         {/* <color attach="background" args={["#cfe0ba"]} /> */}
 
         <Suspense fallback={null}>
-          <group transform scale={[1, 1, 1]} position={[20, 0, -25]}>
-            {namesList}
-            {grasses}
-            {grasses2}
-            {grasses3}
-          </group>
-          {/* <group transform scale={[1, 1, 1]} position={[20, 0, -25]}>
-            <FeaturedImage position={[-20, 0, 55]} data={imageData[0]} rotation={[0 * (Math.PI / 180), 180 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[-5, 0, 51]} data={imageData[1]} rotation={[0 * (Math.PI / 180), -150 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[6, 0, 40]} data={imageData[2]} rotation={[0 * (Math.PI / 180), -120 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[10, 0, 25]} data={imageData[3]} rotation={[0 * (Math.PI / 180), -90 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[6, 0, 10]} data={imageData[4]} rotation={[0 * (Math.PI / 180), -60 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[-5, 0, -1]} data={imageData[5]} rotation={[0 * (Math.PI / 180), -30 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[-20, 0, -5]} data={imageData[6]} rotation={[0 * (Math.PI / 180), 0 * (Math.PI / 180), 0]} />
-            <FeaturedImage position={[-35, 0, -1]} data={imageData[7]} rotation={[0 * (Math.PI / 180), 30 * (Math.PI / 180), 0]} />
-          </group> */}
+          {namesList}
+          {grasses}
+          {grasses2}
+          {grasses3}
+          <Plane material-color="#99b27a" args={[50, 50]} position={[0, -10, 0]} rotation={[-Math.PI / 2, 0, 0]} />
         </Suspense>
         <ambientLight />
-        <FirstPersonControls
-          // activeLook
-          enabled
-          heightCoef={1}
-          heightMax={0.5}
-          heightMin={0.5}
-          lookSpeed={0}
-          lookVertical
-          movementSpeed={20}
-          verticalMax={3.141592653589793}
-          verticalMin={0}
-        />
-        {/* <OrbitControls /> */}
-        {/* <OrbitControls enableRotate={false} enablePan={true} minDistance={5} maxDistance={200} autoRotate={false} autoRotateSpeed={0.8} /> */}
+
+        {isFirstPersonControls ? (
+          <FirstPersonControls
+            // activeLook
+            enabled
+            heightCoef={1}
+            heightMax={0.5}
+            heightMin={0.5}
+            lookSpeed={0}
+            lookVertical
+            movementSpeed={20}
+            verticalMax={3.141592653589793}
+            verticalMin={0}
+          />
+        ) : (
+          <OrbitControls minDistance={5} maxDistance={200} autoRotate={false} autoRotateSpeed={0.8} />
+        )}
       </Canvas>
       <Loader />
     </div>
@@ -116,9 +129,11 @@ function FeaturedImage(props) {
     <>
       <Html transform position={props.position} rotation={props.rotation}>
         {/* <a href={props.data.link} target="_blank" rel="noreferrer"> */}
-        <img src={props.data.image} alt="thumbnail" />
-        {/* </a> */}
-        {/* <p className="flip">{props.data.title}</p> */}
+        <div className="grasswrapper" style={{ height: "1375" }}>
+          <img src={props.data.image} alt="thumbnail" />
+          {/* </a> */}
+          {/* <p className="flip">{props.data.title}</p> */}
+        </div>
       </Html>
     </>
   );

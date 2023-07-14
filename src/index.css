@@ -17,6 +17,14 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+.grasswrapper {
+  position: relative;
+}
+
+.grasswrapper > img {
+  position: absolute;
+  bottom: 0;
+}
 img {
   /* pointer-events: none; */
   transform: scale(-1, 1);
