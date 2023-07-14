@@ -5,23 +5,6 @@ import { Suspense, useState } from "react";
 import { Canvas } from "react-three-fiber";
 import { Loader, Html, FirstPersonControls, Plane, OrbitControls } from "@react-three/drei";
 
-function shuffle(array) {
-  let currentIndex = array.length,
-    randomIndex;
-
-  // While there remain elements to shuffle.
-  while (currentIndex !== 0) {
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
-}
-
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
@@ -37,66 +20,36 @@ function App() {
     { image: require("./img/grass7.gif") },
     { image: require("./img/grass8.gif") },
   ];
-  imageData = shuffle(imageData);
 
-  var viewportData = [
-    [0, 0, 60],
-    [0, -50, 60],
-    [0, -20, 60],
-    [0, 20, 60],
-    [0, -30, 60],
-  ];
-  // viewportData = shuffle(viewportData);
+  const [gridSize, setGridSize] = useState(1);
+  const planeSize = gridSize * 25;
 
-  var namesList = imageData.map(function (_, index) {
-    return <FeaturedImage key={index + "grass0"} position={[-50 + index * 10, -11, getRandomInt(20)]} data={imageData[index]} />;
-  });
+  function setInitialData(gridsize) {
+    var initialData = [];
+    for (let i = 0; i < gridsize * gridsize * 10; i++) {
+      var imageIndex = getRandomInt(imageData.length);
+      initialData.push({
+        image: imageData[imageIndex].image,
+        position: [getRandomInt(-planeSize + gridSize * planeSize * 0.5), -11, planeSize * 0.3 - getRandomInt(0.6 * gridSize * planeSize)],
+      });
+    }
+    return initialData;
+  }
 
-  var grasses = imageData.map(function (_, index) {
-    return <FeaturedImage key={index + "grass1"} position={[getRandomInt(50), -11, getRandomInt(20)]} data={imageData[index]} />;
-  });
-
-  var grasses2 = imageData.map(function (_, index) {
-    return <FeaturedImage key={index + "grass2"} position={[-50 + getRandomInt(50), -11, getRandomInt(40)]} data={imageData[index]} />;
-  });
-
-  var grasses3 = imageData.map(function (_, index) {
-    return <FeaturedImage key={index + "grass3"} position={[-20 + getRandomInt(50), -11, getRandomInt(40)]} data={imageData[index]} />;
-  });
-
-  // document.addEventListener('keyup', event => {
-  //   if (event.code === 'Space') {
-  //     console.log('Space pressed')
-  //   }
-  // })
-
-  const [isFirstPersonControls, setFirstPersonControls] = useState(true);
-
-  // const toggleControls() => {
-  //   setFirstPersonControls(!isFirstPersonControls);
-  // };
+  const [isFirstPersonControls, setFirstPersonControls] = useState(false);
+  const [grassData, setGrassData] = useState(setInitialData(gridSize));
 
   const handleSpace = (e) => {
     if (e.code === "Space") {
-      // toggleControls();
       setFirstPersonControls(!isFirstPersonControls);
-
-      console.log("Space pressed");
     }
   };
 
   return (
     <div className="App">
-      {/* <Canvas camera={{ fov: 75, position: [0, -30, 10] }} style={{ height: "100vh", width: "100vw" }}> */}
-      <Canvas onKeyDown={handleSpace} camera={{ fov: 75, position: viewportData[0] }} style={{ height: "100vh", width: "100vw" }}>
-        {/* <color attach="background" args={["#cfe0ba"]} /> */}
-
+      <Canvas onKeyDown={handleSpace} camera={{ fov: 75, position: [0, 0, 30] }} style={{ height: "100vh", width: "100vw" }}>
         <Suspense fallback={null}>
-          {namesList}
-          {grasses}
-          {grasses2}
-          {grasses3}
-          <Plane material-color="#99b27a" args={[50, 50]} position={[0, -10, 0]} rotation={[-Math.PI / 2, 0, 0]} />
+          <GrassGrid grassData={grassData} planeSize={planeSize} gridSize={gridSize} />
         </Suspense>
         <ambientLight />
 
@@ -124,15 +77,28 @@ function App() {
 
 export default App;
 
-function FeaturedImage(props) {
+function GrassGrid(props) {
+  const planeArgs = props.planeSize * props.gridSize;
+  const grassData = props.grassData;
+
+  var grasses = grassData.map(function (_, index) {
+    return <GrassBit key={index + "grass3"} position={grassData[index].position} data={grassData[index]} />;
+  });
+
+  return (
+    <>
+      {grasses}
+      <Plane material-color="#99b27a" args={[planeArgs, planeArgs]} position={[0, -10, 0]} rotation={[-Math.PI / 2, 0, 0]} />
+    </>
+  );
+}
+
+function GrassBit(props) {
   return (
     <>
       <Html transform position={props.position} rotation={props.rotation}>
-        {/* <a href={props.data.link} target="_blank" rel="noreferrer"> */}
         <div className="grasswrapper" style={{ height: "1375" }}>
-          <img src={props.data.image} alt="thumbnail" />
-          {/* </a> */}
-          {/* <p className="flip">{props.data.title}</p> */}
+          <img src={props.data.image} alt="grass" />
         </div>
       </Html>
     </>
