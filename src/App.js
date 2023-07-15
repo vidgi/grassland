@@ -35,7 +35,7 @@ function App() {
   function setInitialData(gridsize) {
     var initialData = [];
     for (let i = 0; i < gridsize * gridsize * 10; i++) {
-      var imageIndex = getRandomInt(imageData.length - 5);
+      var imageIndex = getRandomInt(imageData.length);
       initialData.push({
         image: imageData[imageIndex].image,
         position: [getRandomInt(-planeSize + gridSize * planeSize * 0.5), -11, planeSize * 0.3 - getRandomInt(0.6 * gridSize * planeSize)],
