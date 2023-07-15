@@ -83,9 +83,7 @@ function App() {
           }}
         >
           {"patch of prairie"}
-          {/* or maybe prairie bit */}
         </div>
-
         <div
           style={{
             position: "absolute",
