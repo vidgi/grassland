@@ -82,7 +82,8 @@ function App() {
             zIndex: "10000",
           }}
         >
-          {"patch of prairie"}// or maybe prairie bit
+          {"patch of prairie"}
+          {/* or maybe prairie bit */}
         </div>
 
         <div
