@@ -1,3 +1,16 @@
+/* @import url("https://fonts.googleapis.com/css?family=Chakra+Petch:500&display=swap"); */
+@font-face {
+  font-family: "DM Mono";
+  src: local("DM Mono"), url(./font/DMMono-Regular.ttf) format("truetype");
+}
+
+body {
+  color: #708558;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .App {
-  text-align: center;
+  font-family: DM Mono, monospace;
 }

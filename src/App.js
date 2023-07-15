@@ -1,9 +1,17 @@
 import "./App.css";
 
-import { Suspense, useState } from "react";
-
-import { Canvas } from "react-three-fiber";
-import { Loader, Html, FirstPersonControls, Plane, OrbitControls } from "@react-three/drei";
+import React, { Suspense, useState } from "react";
+import GrazeIcon from "@mui/icons-material/Agriculture";
+import GrowIcon from "@mui/icons-material/Grass";
+import FireIcon from "@mui/icons-material/LocalFireDepartment";
+import { Canvas } from "@react-three/fiber";
+import { Loader, GizmoHelper, GizmoViewport, PointerLockControls, KeyboardControls, FirstPersonControls } from "@react-three/drei";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { Perf } from "r3f-perf";
+import { Physics } from "@react-three/rapier";
+import { Player } from "./Player";
+import { Ground } from "./Ground";
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -27,7 +35,7 @@ function App() {
   function setInitialData(gridsize) {
     var initialData = [];
     for (let i = 0; i < gridsize * gridsize * 10; i++) {
-      var imageIndex = getRandomInt(imageData.length);
+      var imageIndex = getRandomInt(imageData.length - 5);
       initialData.push({
         image: imageData[imageIndex].image,
         position: [getRandomInt(-planeSize + gridSize * planeSize * 0.5), -11, planeSize * 0.3 - getRandomInt(0.6 * gridSize * planeSize)],
@@ -36,71 +44,113 @@ function App() {
     return initialData;
   }
 
-  const [isFirstPersonControls, setFirstPersonControls] = useState(false);
   const [grassData, setGrassData] = useState(setInitialData(gridSize));
 
-  const handleSpace = (e) => {
-    if (e.code === "Space") {
-      setFirstPersonControls(!isFirstPersonControls);
-    }
+  const [mode, setMode] = useState("grow");
+
+  const handleModeChange = (e, newMode) => {
+    setMode(newMode);
   };
+
+  const theme = createTheme({
+    palette: {
+      primary: {
+        light: "#99b27a",
+        main: "#99b27a",
+        dark: "#000000",
+        contrastText: "#99b27a",
+      },
+    },
+    typography: {
+      fontFamily: `"DM Mono", "Courier", monospace`,
+    },
+    card: {
+      backgroundColor: "#c5ccb6 !important",
+    },
+  });
 
   return (
     <div className="App">
-      <Canvas onKeyDown={handleSpace} camera={{ fov: 75, position: [0, 0, 30] }} style={{ height: "100vh", width: "100vw" }}>
-        <Suspense fallback={null}>
-          <GrassGrid grassData={grassData} planeSize={planeSize} gridSize={gridSize} />
-        </Suspense>
-        <ambientLight />
+      <ThemeProvider theme={theme}>
+        <div
+          style={{
+            position: "absolute",
+            top: "1em",
+            left: "1.5em",
+            zIndex: "10000",
+          }}
+        >
+          {"prairie earth"}
+        </div>
 
-        {isFirstPersonControls ? (
-          <FirstPersonControls
-            // activeLook
-            enabled
-            heightCoef={1}
-            heightMax={0.5}
-            heightMin={0.5}
-            lookSpeed={0}
-            lookVertical
-            movementSpeed={20}
-            verticalMax={3.141592653589793}
-            verticalMin={0}
-          />
-        ) : (
-          <OrbitControls minDistance={5} maxDistance={200} autoRotate={false} autoRotateSpeed={0.8} />
-        )}
-      </Canvas>
-      <Loader />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1em",
+            right: "0.5em",
+            zIndex: "10000",
+          }}
+        >
+          <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} aria-label="mode selection">
+            <ToggleButton value="grow" aria-label="grow mode">
+              <GrowIcon />
+            </ToggleButton>
+            <ToggleButton value="graze" aria-label="graze mode">
+              <GrazeIcon />
+            </ToggleButton>
+            <ToggleButton value="fire" aria-label="fire mode">
+              <FireIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
+
+        <KeyboardControls
+          map={[
+            { name: "forward", keys: ["ArrowUp", "w", "W"] },
+            { name: "backward", keys: ["ArrowDown", "s", "S"] },
+            { name: "left", keys: ["ArrowLeft", "a", "A"] },
+            { name: "right", keys: ["ArrowRight", "d", "D"] },
+            { name: "jump", keys: ["Space"] },
+          ]}
+        >
+          <Canvas camera={{ fov: 60, position: [0, 0, -40] }} style={{ height: "100vh", width: "100vw" }}>
+            <Suspense fallback={null}>
+              {/* <GizmoHelper
+                alignment="top-right" // widget alignment within scene
+                margin={[80, 80]} // widget margins (X, Y)
+              >
+                <GizmoViewport axisColors={["#c6cc8f", "#bdbb99", "#acbd99"]} labelColor="gray" hoverColor="black" />
+              </GizmoHelper> */}
+
+              <Physics gravity={[0, -30, 0]}>
+                <Ground grassData={grassData} planeSize={planeSize} gridSize={gridSize} />
+
+                <Player />
+              </Physics>
+            </Suspense>
+            <ambientLight />
+
+            {/* <FirstPersonControls
+              // activeLook
+              enabled
+              heightCoef={1}
+              heightMax={0.5}
+              heightMin={0.5}
+              lookSpeed={0}
+              lookVertical
+              movementSpeed={20}
+              verticalMax={3.141592653589793}
+              verticalMin={0}
+            /> */}
+            {/* <PointerLockControls /> */}
+            {/* <Perf /> */}
+          </Canvas>
+        </KeyboardControls>
+
+        <Loader />
+      </ThemeProvider>
     </div>
   );
 }
 
 export default App;
-
-function GrassGrid(props) {
-  const planeArgs = props.planeSize * props.gridSize;
-  const grassData = props.grassData;
-
-  var grasses = grassData.map(function (_, index) {
-    return <GrassBit key={index + "grass3"} position={grassData[index].position} data={grassData[index]} />;
-  });
-
-  return (
-    <>
-      {grasses}
-      <Plane material-color="#99b27a" args={[planeArgs, planeArgs]} position={[0, -10, 0]} rotation={[-Math.PI / 2, 0, 0]} />
-    </>
-  );
-}
-
-function GrassBit(props) {
-  return (
-    <>
-      <Html transform position={props.position} rotation={props.rotation}>
-        <div className="grasswrapper" style={{ height: "1375" }}>
-          <img src={props.data.image} alt="grass" />
-        </div>
-      </Html>
-    </>
-  );
-}
