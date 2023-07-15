@@ -4,6 +4,8 @@ import React, { Suspense, useState } from "react";
 import GrazeIcon from "@mui/icons-material/Agriculture";
 import GrowIcon from "@mui/icons-material/Grass";
 import FireIcon from "@mui/icons-material/LocalFireDepartment";
+import SeedIcon from "@mui/icons-material/Grain";
+
 import { Canvas } from "@react-three/fiber";
 import { Loader, GizmoHelper, GizmoViewport, PointerLockControls, KeyboardControls, FirstPersonControls } from "@react-three/drei";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
@@ -80,7 +82,7 @@ function App() {
             zIndex: "10000",
           }}
         >
-          {"prairie earth"}
+          {"prairie patch"}
         </div>
 
         <div
@@ -92,6 +94,9 @@ function App() {
           }}
         >
           <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} aria-label="mode selection">
+            <ToggleButton value="seed" aria-label="seed mode">
+              <SeedIcon />
+            </ToggleButton>
             <ToggleButton value="grow" aria-label="grow mode">
               <GrowIcon />
             </ToggleButton>
