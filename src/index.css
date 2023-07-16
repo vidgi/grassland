@@ -9,10 +9,6 @@ body {
   background-color: #cfe0ba;
 }
 
-.flip {
-  transform: scale(-1, 1);
-}
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
@@ -27,7 +23,6 @@ code {
 }
 img {
   /* pointer-events: none; */
-  /* transform: scale(-1, 1); */
   user-select: none;
   -webkit-transition: 0.3s ease-in-out;
   transition: 0.3s ease-in-out;

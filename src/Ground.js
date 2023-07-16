@@ -1,13 +1,9 @@
 import React from "react";
-import * as THREE from "three";
-import { useTexture, Box } from "@react-three/drei";
+import { Box } from "@react-three/drei";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
-import grass from "./assets/grass.jpg";
 import { GrassBit } from "./GrassBit";
 
 export function Ground({ mode, grassData, planeSize, gridSize, callback }) {
-  const texture = useTexture(grass);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   const planeArgs = planeSize * gridSize;
 
   var grasses = grassData?.map(function (_, index) {

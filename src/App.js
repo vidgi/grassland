@@ -100,7 +100,7 @@ function App() {
       <Shape
         image={bluestemData[imageIndex]}
         key={shapeCount}
-        position={[1 / getRandomInt(10), -11, planeSize * 0.2 - getRandomInt(0.6 * gridSize * planeSize)]}
+        position={[0 + 1 / getRandomInt(20), -11, planeSize * 0.2 - getRandomInt(0.6 * gridSize * planeSize)]}
       />,
     ]);
   };
@@ -167,9 +167,9 @@ function App() {
         >
           <Canvas onClick={handleSeed} camera={{ fov: 60, position: [0, 0, -40] }} style={{ height: "100vh", width: "100vw" }}>
             <Suspense fallback={null}>
+              {[...shapesOnCanvas]}
               <Physics gravity={[0, -30, 0]}>
                 <Ground mode={mode} grassData={grassData} planeSize={planeSize} gridSize={gridSize} callback={callback} />
-                {[...shapesOnCanvas]}
 
                 <Player />
               </Physics>
@@ -189,12 +189,10 @@ export default App;
 
 function Shape(props) {
   return (
-    <RigidBody type="fixed" colliders={false}>
-      <Html transform position={props.position}>
-        <div className="grasswrapper" style={{ height: "1375" }}>
-          <img src={props.image} alt="grass" />
-        </div>
-      </Html>
-    </RigidBody>
+    <Html transform position={props.position}>
+      <div className="grasswrapper" style={{ height: "1375" }}>
+        <img src={props.image} alt="grass" />
+      </div>
+    </Html>
   );
 }
