@@ -16,6 +16,7 @@
     "@testing-library/user-event": "^13.2.1",
     "r3f-perf": "^7.1.2",
     "react": "^18.0.0",
+    "react-animated-cursor": "^2.7.0",
     "react-dom": "^18.0.0",
     "react-scripts": "5.0.1",
     "three": "^0.139.2",
