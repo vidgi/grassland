@@ -114,9 +114,9 @@ function App() {
   return (
     <div className="App">
       <AnimatedCursor />
-      <audio id="audio" loop>
+      {/* <audio id="audio" loop>
         <source src="https://s3.us-east-2.amazonaws.com/vidyagiri.com/images/birdsong-trim.mp3" type="audio/mpeg" />
-      </audio>
+      </audio> */}
       <ThemeProvider theme={theme}>
         <div
           style={{

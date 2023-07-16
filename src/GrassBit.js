@@ -2,8 +2,8 @@ import { Html } from "@react-three/drei";
 
 export function GrassBit({ grassData, mode, position, data, callback }) {
   const handleClick = (e) => {
-    var x = document.getElementById("audio");
-    x.play();
+    // var x = document.getElementById("audio");
+    // x.play();
 
     if (mode === "grow") {
       handleGrow(e);
