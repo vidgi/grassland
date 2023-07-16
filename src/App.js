@@ -21,7 +21,7 @@ function getRandomInt(max) {
 
 function App() {
   var bluestemData = {
-    0: require("./img/grass1.gif"),
+    0: require("./img/plant1.gif"),
     1: require("./img/grass1.gif"),
     2: require("./img/grass2.gif"),
     3: require("./img/grass3.gif"),
@@ -30,17 +30,23 @@ function App() {
     6: require("./img/grass6.gif"),
     7: require("./img/grass7.gif"),
     8: require("./img/grass8.gif"),
+    9: require("./img/plant2.gif"),
+    10: require("./img/plant3.gif"),
+    11: require("./img/plant4.gif"),
+    12: require("./img/plant5.gif"),
+    13: require("./img/plant6.gif"),
+    14: require("./img/plant7.gif"),
   };
 
   const gridSize = 1;
   const planeSize = 100;
-  const plantMultiplier = 100;
+  const plantMultiplier = 75;
   function setInitialData(gridsize) {
     var initialData = [];
     for (let i = 0; i < gridsize * gridsize * plantMultiplier; i++) {
       // put random species selection here once adding more species
       // limit to only smaller sizes at first
-      var imageIndex = getRandomInt(8);
+      var imageIndex = getRandomInt(14);
       initialData.push({
         id: "big-bluestem-" + i,
         size: imageIndex,
@@ -92,7 +98,7 @@ function App() {
   };
 
   const [shapesOnCanvas, setShapesOnCanvas] = useState([]);
-  var imageIndex = getRandomInt(8);
+  var imageIndex = getRandomInt(14);
   const addShape = (e) => {
     const shapeCount = shapesOnCanvas.length;
     setShapesOnCanvas([
