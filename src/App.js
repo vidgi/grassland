@@ -131,7 +131,7 @@ function App() {
         <div
           style={{
             position: "absolute",
-            top: "1em",
+            top: "1.5em",
             left: "1.5em",
             zIndex: "10000",
           }}
@@ -144,13 +144,13 @@ function App() {
         <div
           style={{
             position: "absolute",
-            top: "1em",
-            right: "0.5em",
+            bottom: "1.5em",
+            left: "1.5em",
             zIndex: "10000",
           }}
         >
-          <ToggleButton value={!mute} color="primary" selected={!mute} onClick={toggleMusic} aria-label="mute music">
-            <Tooltip title="mute music">
+          <ToggleButton size={"small"} value={!mute} selected={!mute} onClick={toggleMusic} aria-label="toggle music">
+            <Tooltip title="toggle music">
               <MusicIcon />
             </Tooltip>
           </ToggleButton>
@@ -159,8 +159,8 @@ function App() {
         <div
           style={{
             position: "absolute",
-            bottom: "1em",
-            right: "0.5em",
+            bottom: "1.5em",
+            right: "1.5em",
             zIndex: "10000",
           }}
         >
