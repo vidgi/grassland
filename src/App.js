@@ -11,7 +11,7 @@ import { Loader, Html, KeyboardControls } from "@react-three/drei";
 import { ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 // import { Perf } from "r3f-perf";
-import { Physics, RigidBody } from "@react-three/rapier";
+import { Physics } from "@react-three/rapier";
 import { Player } from "./Player";
 import { Ground } from "./Ground";
 
