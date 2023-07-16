@@ -197,7 +197,7 @@ function App() {
             { name: "jump", keys: ["Space"] },
           ]}
         >
-          <Canvas onClick={handleSeed} camera={{ fov: 60, position: [0, 0, -40] }} style={{ height: "100vh", width: "100vw" }}>
+          <Canvas onClick={handleSeed} camera={{ fov: 60, position: [0, 0, -60] }} style={{ height: "100vh", width: "100vw" }}>
             <Suspense fallback={null}>
               {[...shapesOnCanvas]}
               <Physics gravity={[0, -30, 0]}>
