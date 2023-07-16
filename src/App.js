@@ -3,15 +3,15 @@ import React, { Suspense, useState } from "react";
 import GrazeIcon from "@mui/icons-material/ContentCut";
 import GrowIcon from "@mui/icons-material/Grass";
 import FireIcon from "@mui/icons-material/LocalFireDepartment";
-// import SeedIcon from "@mui/icons-material/Grain";
+import SeedIcon from "@mui/icons-material/Grain";
 import AnimatedCursor from "react-animated-cursor";
 
 import { Canvas } from "@react-three/fiber";
-import { Loader, KeyboardControls, Cloud, Sky, OrbitControls } from "@react-three/drei";
+import { Loader, Html, KeyboardControls } from "@react-three/drei";
 import { ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 // import { Perf } from "r3f-perf";
-import { Physics } from "@react-three/rapier";
+import { Physics, RigidBody } from "@react-three/rapier";
 import { Player } from "./Player";
 import { Ground } from "./Ground";
 
@@ -32,12 +32,12 @@ function App() {
     8: require("./img/grass8.gif"),
   };
 
-  const [gridSize, setGridSize] = useState(1);
-  const planeSize = gridSize * 100;
-
+  const gridSize = 1;
+  const planeSize = 100;
+  const plantMultiplier = 100;
   function setInitialData(gridsize) {
     var initialData = [];
-    for (let i = 0; i < gridsize * gridsize * 100; i++) {
+    for (let i = 0; i < gridsize * gridsize * plantMultiplier; i++) {
       // put random species selection here once adding more species
       // limit to only smaller sizes at first
       var imageIndex = getRandomInt(8);
@@ -57,7 +57,7 @@ function App() {
 
   const [grassData, setGrassData] = useState(setInitialData(gridSize));
 
-  const [mode, setMode] = useState("grow");
+  const [mode, setMode] = useState("");
 
   const handleModeChange = (e, newMode) => {
     setMode(newMode);
@@ -84,6 +84,27 @@ function App() {
     },
   });
 
+  const handleSeed = (e) => {
+    if (mode === "seed") {
+      // console.log("seed");
+      addShape(e);
+    }
+  };
+
+  const [shapesOnCanvas, setShapesOnCanvas] = useState([]);
+  var imageIndex = getRandomInt(8);
+  const addShape = (e) => {
+    const shapeCount = shapesOnCanvas.length;
+    setShapesOnCanvas([
+      ...shapesOnCanvas,
+      <Shape
+        image={bluestemData[imageIndex]}
+        key={shapeCount}
+        position={[1 / getRandomInt(10), -11, planeSize * 0.2 - getRandomInt(0.6 * gridSize * planeSize)]}
+      />,
+    ]);
+  };
+
   return (
     <div className="App">
       <AnimatedCursor />
@@ -99,7 +120,9 @@ function App() {
             zIndex: "10000",
           }}
         >
-          {"patch of prairie"}
+          <Tooltip title="explore a bit of a grassland world! inspired by the tallgrass prairie <3">
+            <div>{"patch of prairie"}</div>
+          </Tooltip>
         </div>
         <div
           style={{
@@ -110,11 +133,11 @@ function App() {
           }}
         >
           <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} aria-label="mode selection">
-            {/* <ToggleButton value="seed" aria-label="seed mode">
+            <ToggleButton value="seed" aria-label="seed mode">
               <Tooltip title="seed">
                 <SeedIcon />
               </Tooltip>
-            </ToggleButton> */}
+            </ToggleButton>
             <ToggleButton value="grow" aria-label="grow mode">
               <Tooltip title="grow">
                 <GrowIcon />
@@ -142,17 +165,16 @@ function App() {
             { name: "jump", keys: ["Space"] },
           ]}
         >
-          <Canvas camera={{ fov: 60, position: [0, 0, -40] }} style={{ height: "100vh", width: "100vw" }}>
+          <Canvas onClick={handleSeed} camera={{ fov: 60, position: [0, 0, -40] }} style={{ height: "100vh", width: "100vw" }}>
             <Suspense fallback={null}>
-              {/* <Sky sunPosition={[100, 20, 100]} inclination={0} azimuth={0.25} /> */}
-
               <Physics gravity={[0, -30, 0]}>
                 <Ground mode={mode} grassData={grassData} planeSize={planeSize} gridSize={gridSize} callback={callback} />
+                {[...shapesOnCanvas]}
+
                 <Player />
               </Physics>
             </Suspense>
             <ambientLight />
-            {/* <OrbitControls autoRotate={true} autoRotateSpeed={0.1} /> */}
             {/* <Perf /> */}
           </Canvas>
         </KeyboardControls>
@@ -164,3 +186,15 @@ function App() {
 }
 
 export default App;
+
+function Shape(props) {
+  return (
+    <RigidBody type="fixed" colliders={false}>
+      <Html transform position={props.position}>
+        <div className="grasswrapper" style={{ height: "1375" }}>
+          <img src={props.image} alt="grass" />
+        </div>
+      </Html>
+    </RigidBody>
+  );
+}
