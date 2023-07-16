@@ -4,6 +4,8 @@ import GrazeIcon from "@mui/icons-material/ContentCut";
 import GrowIcon from "@mui/icons-material/Grass";
 import FireIcon from "@mui/icons-material/LocalFireDepartment";
 import SeedIcon from "@mui/icons-material/Grain";
+import MusicIcon from "@mui/icons-material/MusicNote";
+
 import AnimatedCursor from "react-animated-cursor";
 
 import { Canvas } from "@react-three/fiber";
@@ -64,6 +66,14 @@ function App() {
   const [grassData, setGrassData] = useState(setInitialData(gridSize));
 
   const [mode, setMode] = useState("");
+  const [mute, setMute] = useState(false);
+
+  const toggleMusic = () => {
+    var x = document.getElementById("audio");
+    if (mute) x.play();
+    else x.pause();
+    setMute(!mute);
+  };
 
   const handleModeChange = (e, newMode) => {
     setMode(newMode);
@@ -114,9 +124,9 @@ function App() {
   return (
     <div className="App">
       <AnimatedCursor />
-      {/* <audio id="audio" loop>
+      <audio id="audio" loop>
         <source src="https://s3.us-east-2.amazonaws.com/vidyagiri.com/images/birdsong-trim.mp3" type="audio/mpeg" />
-      </audio> */}
+      </audio>
       <ThemeProvider theme={theme}>
         <div
           style={{
@@ -130,6 +140,22 @@ function App() {
             <div>{"patch of prairie"}</div>
           </Tooltip>
         </div>
+
+        <div
+          style={{
+            position: "absolute",
+            top: "1em",
+            right: "0.5em",
+            zIndex: "10000",
+          }}
+        >
+          <ToggleButton value={!mute} color="primary" selected={!mute} onClick={toggleMusic} aria-label="mute music">
+            <Tooltip title="mute music">
+              <MusicIcon />
+            </Tooltip>
+          </ToggleButton>
+        </div>
+
         <div
           style={{
             position: "absolute",
