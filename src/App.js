@@ -201,7 +201,7 @@ function App() {
             <Suspense fallback={null}>
               {[...shapesOnCanvas]}
               <Physics gravity={[0, -30, 0]}>
-                <Ground mode={mode} grassData={grassData} planeSize={planeSize} gridSize={gridSize} callback={callback} />
+                <Ground mute={mute} mode={mode} grassData={grassData} planeSize={planeSize} gridSize={gridSize} callback={callback} />
 
                 <Player />
               </Physics>

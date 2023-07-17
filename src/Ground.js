@@ -3,12 +3,13 @@ import { Box } from "@react-three/drei";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { GrassBit } from "./GrassBit";
 
-export function Ground({ mode, grassData, planeSize, gridSize, callback }) {
+export function Ground({ mute, mode, grassData, planeSize, gridSize, callback }) {
   const planeArgs = planeSize * gridSize;
 
   var grasses = grassData?.map(function (_, index) {
     return (
       <GrassBit
+        mute={mute}
         grassData={grassData}
         mode={mode}
         key={grassData[index].id}
