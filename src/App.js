@@ -37,7 +37,13 @@ function App() {
     11: require("./img/plant4.gif"),
     12: require("./img/plant5.gif"),
     13: require("./img/plant6.gif"),
-    14: require("./img/plant7.gif"),
+    14: require("./img/planty6.gif"),
+    15: require("./img/planty1.gif"),
+    16: require("./img/planty2.gif"),
+    17: require("./img/planty3.gif"),
+    18: require("./img/planty4.gif"),
+    19: require("./img/planty5.gif"),
+    // 20: require("./img/plant7.gif"), //  i don't like this one...
   };
 
   const gridSize = 1;
@@ -48,7 +54,7 @@ function App() {
     for (let i = 0; i < gridsize * gridsize * plantMultiplier; i++) {
       // put random species selection here once adding more species
       // limit to only smaller sizes at first
-      var imageIndex = getRandomInt(14);
+      var imageIndex = getRandomInt(20);
       initialData.push({
         id: "big-bluestem-" + i,
         size: imageIndex,
