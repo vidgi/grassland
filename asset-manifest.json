@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/grassland/static/css/main.ba172714.css",
-    "main.js": "/grassland/static/js/main.a8e4d996.js",
+    "main.js": "/grassland/static/js/main.52a61f59.js",
     "static/js/787.7d3690aa.chunk.js": "/grassland/static/js/787.7d3690aa.chunk.js",
     "static/media/grass8.gif": "/grassland/static/media/grass8.3898f4befe6304938e34.gif",
     "static/media/grass7.gif": "/grassland/static/media/grass7.c801a765ce671dc97f0e.gif",
@@ -25,11 +25,11 @@
     "static/media/grass2.gif": "/grassland/static/media/grass2.48c3b787a701f4080453.gif",
     "index.html": "/grassland/index.html",
     "main.ba172714.css.map": "/grassland/static/css/main.ba172714.css.map",
-    "main.a8e4d996.js.map": "/grassland/static/js/main.a8e4d996.js.map",
+    "main.52a61f59.js.map": "/grassland/static/js/main.52a61f59.js.map",
     "787.7d3690aa.chunk.js.map": "/grassland/static/js/787.7d3690aa.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.ba172714.css",
-    "static/js/main.a8e4d996.js"
+    "static/js/main.52a61f59.js"
   ]
 }
