@@ -171,11 +171,11 @@ function App() {
           }}
         >
           <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} aria-label="mode selection">
-            <ToggleButton value="seed" aria-label="seed mode">
+            {/* <ToggleButton value="seed" aria-label="seed mode">
               <Tooltip title="seed">
                 <SeedIcon />
               </Tooltip>
-            </ToggleButton>
+            </ToggleButton> */}
             <ToggleButton value="grow" aria-label="grow mode">
               <Tooltip title="grow">
                 <GrowIcon />
