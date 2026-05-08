@@ -1,0 +1,13 @@
+{
+  "name": "grass5",
+  "frames": 3,
+  "frameWidth": 267,
+  "frameHeight": 403,
+  "fps": 5.5556,
+  "frameDurationsMs": [
+    180,
+    180,
+    180
+  ],
+  "image": "grass5.png"
+}

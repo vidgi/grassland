@@ -1,36 +1,37 @@
-body {
+@import "tailwindcss";
+
+@font-face {
+  font-family: "DM Mono";
+  src: local("DM Mono"), url(./font/DMMono-Regular.ttf) format("truetype");
+}
+
+html,
+body,
+#root {
   margin: 0;
-  font-family: Work Sans;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background-color: #cfe0ba;
+  color: #000;
+  text-transform: lowercase;
+  font-family: "DM Mono", "Courier", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: black;
-  /* font-size: 40px; */
-  text-transform: lowercase;
-  background-color: #cfe0ba;
+  cursor: none;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+a,
+button,
+[role="button"],
+[data-cursor] {
+  cursor: none;
 }
 
-.grasswrapper {
-  position: relative;
-}
-
-.grasswrapper > img {
-  position: absolute;
-  bottom: 0;
-}
-img {
-  /* pointer-events: none; */
-  user-select: none;
-  -webkit-transition: 0.3s ease-in-out;
-  transition: 0.3s ease-in-out;
-  opacity: 0.7;
-  filter: invert(0.6);
-}
-
-img:hover {
-  opacity: 0.8;
-  filter: invert(0);
+@media (pointer: coarse) {
+  body {
+    cursor: auto;
+  }
 }

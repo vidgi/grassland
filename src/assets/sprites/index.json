@@ -1,0 +1,274 @@
+[
+  {
+    "name": "grass1",
+    "frames": 3,
+    "frameWidth": 119,
+    "frameHeight": 120,
+    "fps": 4.7619,
+    "frameDurationsMs": [
+      210,
+      210,
+      210
+    ],
+    "image": "grass1.png"
+  },
+  {
+    "name": "grass2",
+    "frames": 3,
+    "frameWidth": 142,
+    "frameHeight": 191,
+    "fps": 5.5556,
+    "frameDurationsMs": [
+      180,
+      180,
+      180
+    ],
+    "image": "grass2.png"
+  },
+  {
+    "name": "grass3",
+    "frames": 3,
+    "frameWidth": 166,
+    "frameHeight": 206,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "grass3.png"
+  },
+  {
+    "name": "grass4",
+    "frames": 3,
+    "frameWidth": 231,
+    "frameHeight": 263,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "grass4.png"
+  },
+  {
+    "name": "grass5",
+    "frames": 3,
+    "frameWidth": 267,
+    "frameHeight": 403,
+    "fps": 5.5556,
+    "frameDurationsMs": [
+      180,
+      180,
+      180
+    ],
+    "image": "grass5.png"
+  },
+  {
+    "name": "grass6",
+    "frames": 3,
+    "frameWidth": 522,
+    "frameHeight": 531,
+    "fps": 4.5455,
+    "frameDurationsMs": [
+      220,
+      220,
+      220
+    ],
+    "image": "grass6.png"
+  },
+  {
+    "name": "grass7",
+    "frames": 3,
+    "frameWidth": 531,
+    "frameHeight": 852,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "grass7.png"
+  },
+  {
+    "name": "grass8",
+    "frames": 3,
+    "frameWidth": 717,
+    "frameHeight": 1375,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "grass8.png"
+  },
+  {
+    "name": "plant1",
+    "frames": 3,
+    "frameWidth": 238,
+    "frameHeight": 528,
+    "fps": 5.0,
+    "frameDurationsMs": [
+      200,
+      200,
+      200
+    ],
+    "image": "plant1.png"
+  },
+  {
+    "name": "plant2",
+    "frames": 3,
+    "frameWidth": 341,
+    "frameHeight": 551,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "plant2.png"
+  },
+  {
+    "name": "plant3",
+    "frames": 3,
+    "frameWidth": 171,
+    "frameHeight": 261,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "plant3.png"
+  },
+  {
+    "name": "plant4",
+    "frames": 3,
+    "frameWidth": 184,
+    "frameHeight": 191,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "plant4.png"
+  },
+  {
+    "name": "plant5",
+    "frames": 3,
+    "frameWidth": 293,
+    "frameHeight": 500,
+    "fps": 5.0,
+    "frameDurationsMs": [
+      200,
+      200,
+      200
+    ],
+    "image": "plant5.png"
+  },
+  {
+    "name": "plant6",
+    "frames": 3,
+    "frameWidth": 176,
+    "frameHeight": 188,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "plant6.png"
+  },
+  {
+    "name": "plant7",
+    "frames": 3,
+    "frameWidth": 860,
+    "frameHeight": 1091,
+    "fps": 5.0,
+    "frameDurationsMs": [
+      200,
+      200,
+      200
+    ],
+    "image": "plant7.png"
+  },
+  {
+    "name": "planty1",
+    "frames": 3,
+    "frameWidth": 122,
+    "frameHeight": 362,
+    "fps": 4.5455,
+    "frameDurationsMs": [
+      220,
+      220,
+      220
+    ],
+    "image": "planty1.png"
+  },
+  {
+    "name": "planty2",
+    "frames": 3,
+    "frameWidth": 318,
+    "frameHeight": 825,
+    "fps": 4.5455,
+    "frameDurationsMs": [
+      220,
+      220,
+      220
+    ],
+    "image": "planty2.png"
+  },
+  {
+    "name": "planty3",
+    "frames": 3,
+    "frameWidth": 252,
+    "frameHeight": 451,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "planty3.png"
+  },
+  {
+    "name": "planty4",
+    "frames": 3,
+    "frameWidth": 250,
+    "frameHeight": 435,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "planty4.png"
+  },
+  {
+    "name": "planty5",
+    "frames": 2,
+    "frameWidth": 208,
+    "frameHeight": 591,
+    "fps": 5.5556,
+    "frameDurationsMs": [
+      180,
+      180
+    ],
+    "image": "planty5.png"
+  },
+  {
+    "name": "planty6",
+    "frames": 3,
+    "frameWidth": 234,
+    "frameHeight": 217,
+    "fps": 5.2632,
+    "frameDurationsMs": [
+      190,
+      190,
+      190
+    ],
+    "image": "planty6.png"
+  }
+]

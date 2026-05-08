@@ -1,0 +1,13 @@
+{
+  "name": "planty2",
+  "frames": 3,
+  "frameWidth": 318,
+  "frameHeight": 825,
+  "fps": 4.5455,
+  "frameDurationsMs": [
+    220,
+    220,
+    220
+  ],
+  "image": "planty2.png"
+}
