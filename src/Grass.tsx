@@ -243,12 +243,22 @@ function GrassType({
 type SeededPlantMeshProps = {
   meta: SpriteMeta;
   position: [number, number, number];
+  mode: Mode;
+  onClickGrass: () => void;
 };
 
-function SeededPlantMesh({ meta, position }: SeededPlantMeshProps) {
+function SeededPlantMesh({ meta, position, mode, onClickGrass }: SeededPlantMeshProps) {
   const url = useMemo(() => urlFor(meta.name), [meta.name]);
   const texture = useLoader(THREE.TextureLoader, url) as THREE.Texture;
   const matRef = useRef<THREE.SpriteMaterial>(null);
+  const spriteRef = useRef<THREE.Sprite>(null);
+  const modeRef = useRef<Mode>(mode);
+
+  const initialScale = useMemo(() => 0.7 + Math.random() * 0.6, []);
+  const scaleRef = useRef(initialScale);
+  const targetRef = useRef(initialScale);
+
+  modeRef.current = mode;
 
   const planeW = meta.frameWidth * WORLD_PER_PIXEL;
   const planeH = meta.frameHeight * WORLD_PER_PIXEL;
@@ -265,34 +275,87 @@ function SeededPlantMesh({ meta, position }: SeededPlantMeshProps) {
 
   useFrame(({ clock }) => {
     const mat = matRef.current;
-    if (!mat?.map) return;
-    const frame = Math.floor(clock.elapsedTime * meta.fps) % meta.frames;
-    mat.map.offset.x = frame / meta.frames;
+    if (mat?.map) {
+      const frame = Math.floor(clock.elapsedTime * meta.fps) % meta.frames;
+      mat.map.offset.x = frame / meta.frames;
+    }
+
+    const sprite = spriteRef.current;
+    if (sprite) {
+      const diff = targetRef.current - scaleRef.current;
+      if (Math.abs(diff) > 0.001) {
+        scaleRef.current += diff * 0.1;
+        const s = scaleRef.current;
+        sprite.scale.set(planeW * s, planeH * s, 1);
+      }
+    }
   });
 
-  const spriteY = position[1] + planeH / 2;
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    const m = modeRef.current;
+    if (m === null || m === "seed") return;
+    e.stopPropagation();
+
+    let next = targetRef.current;
+    if (m === "grow") next = Math.min(next * 1.5, 6);
+    else if (m === "graze") next = Math.max(next * 0.75, 0.05);
+    else if (m === "fire") next = 0;
+
+    targetRef.current = next;
+    onClickGrass();
+  };
+
+  const handlePointerEnter = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (matRef.current) matRef.current.opacity = OPACITY_HOVER;
+  };
+
+  const handlePointerLeave = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (matRef.current) matRef.current.opacity = OPACITY_DEFAULT;
+  };
+
+  const spriteY = position[1] + (planeH * initialScale) / 2;
 
   return (
     <sprite
+      ref={spriteRef}
       position={[position[0], spriteY, position[2]]}
-      scale={[planeW, planeH, 1]}
+      scale={[planeW * initialScale, planeH * initialScale, 1]}
+      onClick={handleClick}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
     >
-      <spriteMaterial ref={matRef} map={texture} transparent alphaTest={0.05} />
+      <spriteMaterial
+        ref={matRef}
+        map={texture}
+        transparent
+        alphaTest={0.05}
+        opacity={OPACITY_DEFAULT}
+      />
     </sprite>
   );
 }
 
 type SeededGrassProps = {
   plants: SeededPlantData[];
+  mode: Mode;
+  onClickGrass: () => void;
 };
 
-export function SeededGrass({ plants }: SeededGrassProps) {
+export function SeededGrass({ plants, mode, onClickGrass }: SeededGrassProps) {
   return (
     <>
       {plants.map((p, i) => {
         const meta = SPRITES[p.typeIndex % SPRITES.length];
         return (
-          <SeededPlantMesh key={i} meta={meta} position={p.position} />
+          <SeededPlantMesh
+            key={i}
+            meta={meta}
+            position={p.position}
+            mode={mode}
+            onClickGrass={onClickGrass}
+          />
         );
       })}
     </>

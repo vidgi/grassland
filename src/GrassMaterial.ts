@@ -81,7 +81,7 @@ export function createGrassMaterial(
       uFrames: { value: frames },
       uFps: { value: fps },
       uTime: { value: 0 },
-      uTint: { value: 0.6 },
+      uTint: { value: 0.3 },
     },
   }) as GrassMaterial;
   mat.userData = { isGrass: true };

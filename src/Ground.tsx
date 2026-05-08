@@ -34,7 +34,7 @@ export function Ground({
         mode={mode}
         onClickGrass={onClickGrass}
       />
-      <SeededGrass plants={seededPlants} />
+      <SeededGrass plants={seededPlants} mode={mode} onClickGrass={onClickGrass} />
       <mesh
         position={[0, -10, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
