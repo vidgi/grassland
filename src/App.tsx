@@ -12,7 +12,7 @@ const PATCH_SIZE = 100;
 const GRASS_DENSITY = 75;
 
 // lock vertical tilt: polar angle for camera at [80,80,80] looking at [0,-10,0]
-const ISO_POLAR = Math.acos(90 / Math.sqrt(80 * 80 + 90 * 90 + 80 * 80));
+// const ISO_POLAR = Math.acos(90 / Math.sqrt(80 * 80 + 90 * 90 + 80 * 80));
 
 function GrazeIcon() {
   return (
