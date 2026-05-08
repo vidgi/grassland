@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "build:sprites": "python3 scripts/build_spritesheets.py",
+    "build:bison": "python3 scripts/build_spritesheets.py --include graze --no-index --force",
     "predeploy": "pnpm build",
     "deploy": "gh-pages -d dist"
   },

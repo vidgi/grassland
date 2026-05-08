@@ -8,7 +8,7 @@ import seedGif from "./img/seed.gif";
 
 const MODE_GIF: Record<Exclude<Mode, null>, string> = {
   fire: fireGif,
-  graze: grazeGif,
+  bison: grazeGif,
   grow: growGif,
   seed: seedGif,
 };

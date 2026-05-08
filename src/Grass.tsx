@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
 import { useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
 import { createGrassMaterial } from "./GrassMaterial";
 import indexJson from "./assets/sprites/index.json";
+import type { BisonPosition } from "./Bison";
 
-export type Mode = "grow" | "graze" | "fire" | "seed" | null;
+export type Mode = "grow" | "bison" | "fire" | "seed" | null;
 
 export type SeededPlantData = {
   typeIndex: number;
@@ -45,14 +46,27 @@ const GROUND_Y = -10;
 const OPACITY_DEFAULT = 0.7;
 const OPACITY_HOVER = 1.0;
 
+const BISON_GRAZE_RADIUS = 6;
+const BISON_GRAZE_RADIUS_SQ = BISON_GRAZE_RADIUS * BISON_GRAZE_RADIUS;
+const GRAZE_TICK_INTERVAL = 0.3;
+const GRAZE_DECAY = 0.97;
+const GRAZE_FLOOR = 0.1;
+
 type GrassProps = {
   patchSize: number;
   density: number;
   mode: Mode;
   onClickGrass: () => void;
+  bisonPositionsRef: MutableRefObject<BisonPosition[]>;
 };
 
-export function Grass({ patchSize, density, mode, onClickGrass }: GrassProps) {
+export function Grass({
+  patchSize,
+  density,
+  mode,
+  onClickGrass,
+  bisonPositionsRef,
+}: GrassProps) {
   const perType = Math.max(1, Math.round(density / SPRITES.length));
   return (
     <>
@@ -64,6 +78,7 @@ export function Grass({ patchSize, density, mode, onClickGrass }: GrassProps) {
           patchSize={patchSize}
           mode={mode}
           onClickGrass={onClickGrass}
+          bisonPositionsRef={bisonPositionsRef}
         />
       ))}
     </>
@@ -76,6 +91,7 @@ type GrassTypeProps = {
   patchSize: number;
   mode: Mode;
   onClickGrass: () => void;
+  bisonPositionsRef: MutableRefObject<BisonPosition[]>;
 };
 
 function GrassType({
@@ -84,6 +100,7 @@ function GrassType({
   patchSize,
   mode,
   onClickGrass,
+  bisonPositionsRef,
 }: GrassTypeProps) {
   const url = useMemo(() => urlFor(meta.name), [meta.name]);
   const texture = useLoader(THREE.TextureLoader, url) as THREE.Texture;
@@ -119,6 +136,8 @@ function GrassType({
   const opacityAttrRef = useRef<THREE.InstancedBufferAttribute | null>(null);
   const scalesRef = useRef<Float32Array>(new Float32Array(count));   // current (lerping)
   const targetScalesRef = useRef<Float32Array>(new Float32Array(count)); // target
+  const posArrRef = useRef<Float32Array>(new Float32Array(count * 2)); // (x,z) per instance
+  const grazeTickRef = useRef(0);
   const modeRef = useRef<Mode>(mode);
   useEffect(() => {
     modeRef.current = mode;
@@ -134,6 +153,7 @@ function GrassType({
     const phaseArr = new Float32Array(count);
     const scaleArr = new Float32Array(count);
     const opacityArr = new Float32Array(count);
+    const posArr = new Float32Array(count * 2);
 
     for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * 2 * half;
@@ -148,6 +168,8 @@ function GrassType({
       const s = 0.7 + Math.random() * 0.6;
       scaleArr[i] = s;
       opacityArr[i] = OPACITY_DEFAULT;
+      posArr[i * 2] = x;
+      posArr[i * 2 + 1] = z;
     }
 
     mesh.instanceMatrix.needsUpdate = true;
@@ -167,18 +189,40 @@ function GrassType({
     opacityAttrRef.current = opacityAttr;
     scalesRef.current = scaleArr;
     targetScalesRef.current = scaleArr.slice(); // copy initial values as targets
+    posArrRef.current = posArr;
 
     mesh.frustumCulled = false;
     mesh.count = count;
   }, [count, patchSize, geometry]);
 
-  useFrame((state) => {
+  useFrame((state, dt) => {
     material.uniforms.uTime.value = state.clock.elapsedTime;
 
     const cur = scalesRef.current;
     const tgt = targetScalesRef.current;
     const attr = scaleAttrRef.current;
     if (!attr) return;
+
+    grazeTickRef.current -= dt;
+    if (grazeTickRef.current <= 0) {
+      grazeTickRef.current = GRAZE_TICK_INTERVAL;
+      const bisons = bisonPositionsRef.current;
+      if (bisons.length > 0) {
+        const pos = posArrRef.current;
+        for (let i = 0; i < cur.length; i++) {
+          const px = pos[i * 2];
+          const pz = pos[i * 2 + 1];
+          for (let b = 0; b < bisons.length; b++) {
+            const dx = px - bisons[b].x;
+            const dz = pz - bisons[b].z;
+            if (dx * dx + dz * dz < BISON_GRAZE_RADIUS_SQ) {
+              tgt[i] = Math.max(tgt[i] * GRAZE_DECAY, GRAZE_FLOOR);
+              break;
+            }
+          }
+        }
+      }
+    }
 
     let dirty = false;
     for (let i = 0; i < cur.length; i++) {
@@ -213,14 +257,13 @@ function GrassType({
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     const id = e.instanceId;
     const m = modeRef.current;
-    if (id === undefined || m === null || m === "seed") return;
+    if (id === undefined || m === null || m === "seed" || m === "bison") return;
     e.stopPropagation();
 
     const targets = targetScalesRef.current;
 
     let next = targets[id];
     if (m === "grow") next = Math.min(next * 1.5, 6);
-    else if (m === "graze") next = Math.max(next * 0.75, 0.05);
     else if (m === "fire") next = 0;
 
     targets[id] = next;
@@ -245,9 +288,16 @@ type SeededPlantMeshProps = {
   position: [number, number, number];
   mode: Mode;
   onClickGrass: () => void;
+  bisonPositionsRef: MutableRefObject<BisonPosition[]>;
 };
 
-function SeededPlantMesh({ meta, position, mode, onClickGrass }: SeededPlantMeshProps) {
+function SeededPlantMesh({
+  meta,
+  position,
+  mode,
+  onClickGrass,
+  bisonPositionsRef,
+}: SeededPlantMeshProps) {
   const url = useMemo(() => urlFor(meta.name), [meta.name]);
   const texture = useLoader(THREE.TextureLoader, url) as THREE.Texture;
   const matRef = useRef<THREE.SpriteMaterial>(null);
@@ -257,6 +307,7 @@ function SeededPlantMesh({ meta, position, mode, onClickGrass }: SeededPlantMesh
   const initialScale = useMemo(() => 0.7 + Math.random() * 0.6, []);
   const scaleRef = useRef(initialScale);
   const targetRef = useRef(initialScale);
+  const grazeTickRef = useRef(0);
 
   modeRef.current = mode;
 
@@ -273,11 +324,25 @@ function SeededPlantMesh({ meta, position, mode, onClickGrass }: SeededPlantMesh
     texture.needsUpdate = true;
   }, [texture, meta.frames]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, dt) => {
     const mat = matRef.current;
     if (mat?.map) {
       const frame = Math.floor(clock.elapsedTime * meta.fps) % meta.frames;
       mat.map.offset.x = frame / meta.frames;
+    }
+
+    grazeTickRef.current -= dt;
+    if (grazeTickRef.current <= 0) {
+      grazeTickRef.current = GRAZE_TICK_INTERVAL;
+      const bisons = bisonPositionsRef.current;
+      for (let b = 0; b < bisons.length; b++) {
+        const dx = position[0] - bisons[b].x;
+        const dz = position[2] - bisons[b].z;
+        if (dx * dx + dz * dz < BISON_GRAZE_RADIUS_SQ) {
+          targetRef.current = Math.max(targetRef.current * GRAZE_DECAY, GRAZE_FLOOR);
+          break;
+        }
+      }
     }
 
     const sprite = spriteRef.current;
@@ -293,12 +358,11 @@ function SeededPlantMesh({ meta, position, mode, onClickGrass }: SeededPlantMesh
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     const m = modeRef.current;
-    if (m === null || m === "seed") return;
+    if (m === null || m === "seed" || m === "bison") return;
     e.stopPropagation();
 
     let next = targetRef.current;
     if (m === "grow") next = Math.min(next * 1.5, 6);
-    else if (m === "graze") next = Math.max(next * 0.75, 0.05);
     else if (m === "fire") next = 0;
 
     targetRef.current = next;
@@ -341,9 +405,15 @@ type SeededGrassProps = {
   plants: SeededPlantData[];
   mode: Mode;
   onClickGrass: () => void;
+  bisonPositionsRef: MutableRefObject<BisonPosition[]>;
 };
 
-export function SeededGrass({ plants, mode, onClickGrass }: SeededGrassProps) {
+export function SeededGrass({
+  plants,
+  mode,
+  onClickGrass,
+  bisonPositionsRef,
+}: SeededGrassProps) {
   return (
     <>
       {plants.map((p, i) => {
@@ -355,6 +425,7 @@ export function SeededGrass({ plants, mode, onClickGrass }: SeededGrassProps) {
             position={p.position}
             mode={mode}
             onClickGrass={onClickGrass}
+            bisonPositionsRef={bisonPositionsRef}
           />
         );
       })}

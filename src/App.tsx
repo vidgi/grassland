@@ -7,6 +7,7 @@ import { Cursor } from "./Cursor";
 import { Tooltip } from "./ui/Tooltip";
 import { ToggleGroup, ToggleButton } from "./ui/ToggleGroup";
 import type { Mode, SeededPlantData } from "./Grass";
+import type { BisonPosition, BisonSpawn } from "./Bison";
 const PLANE_SIZE = 100;
 const PATCH_SIZE = 100;
 const GRASS_DENSITY = 75;
@@ -39,6 +40,8 @@ export default function App() {
   const [mode, setMode] = useState<Mode>(null);
   const [muted, setMuted] = useState(true);
   const [seededPlants, setSeededPlants] = useState<SeededPlantData[]>([]);
+  const [bisons, setBisons] = useState<BisonSpawn[]>([]);
+  const bisonPositionsRef = useRef<BisonPosition[]>([]);
 
   const toggleMusic = () => {
     const el = audioRef.current;
@@ -61,6 +64,10 @@ export default function App() {
         position: [x, -10, z],
       },
     ]);
+  };
+
+  const handleSpawnBison = (x: number, z: number) => {
+    setBisons((prev) => [...prev, { initialX: x, initialZ: z }]);
   };
 
   return (
@@ -112,10 +119,10 @@ export default function App() {
               ),
             },
             {
-              value: "graze",
-              label: "graze",
+              value: "bison",
+              label: "bison",
               content: (
-                <Tooltip label="graze" side="top">
+                <Tooltip label="bison" side="top">
                   <GrazeIcon />
                 </Tooltip>
               ),
@@ -156,6 +163,9 @@ export default function App() {
             onClickGrass={handleGrassClick}
             seededPlants={seededPlants}
             onSeed={handleSeed}
+            bisons={bisons}
+            onSpawnBison={handleSpawnBison}
+            bisonPositionsRef={bisonPositionsRef}
           />
         </Suspense>
         <ambientLight intensity={1} />

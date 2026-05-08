@@ -147,6 +147,11 @@ def main() -> int:
         default=["fire", "graze", "grow", "seed"],
         help="GIF basenames to skip (default: UI overlay GIFs)",
     )
+    parser.add_argument(
+        "--no-index",
+        action="store_true",
+        help="skip writing index.json (useful for one-off sheets like the bison)",
+    )
     args = parser.parse_args()
 
     in_dir: Path = args.in_dir
@@ -157,7 +162,7 @@ def main() -> int:
     if args.include is not None:
         wanted = {n.lower() for n in args.include}
         gifs = [g for g in gifs if g.stem.lower() in wanted]
-    if args.exclude:
+    elif args.exclude:
         skip = {n.lower() for n in args.exclude}
         gifs = [g for g in gifs if g.stem.lower() not in skip]
 
@@ -178,8 +183,11 @@ def main() -> int:
         meta = stitch(gif, out_dir, args.max_edge)
         index.append(meta)
 
-    (out_dir / "index.json").write_text(json.dumps(index, indent=2) + "\n")
-    print(f"wrote {out_dir / 'index.json'}")
+    if args.no_index:
+        print("skipped index.json (--no-index)")
+    else:
+        (out_dir / "index.json").write_text(json.dumps(index, indent=2) + "\n")
+        print(f"wrote {out_dir / 'index.json'}")
     return 0
 
 
