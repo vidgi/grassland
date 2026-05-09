@@ -5,4 +5,10 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   base: "/grassland/",
   plugins: [react(), tailwindcss()],
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
+  },
 });

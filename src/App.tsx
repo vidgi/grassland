@@ -1,12 +1,13 @@
 import { Suspense, useRef, useState } from "react";
-import { Music, Sprout, Flame, Flower2 } from "lucide-react";
+import { Music, Sprout, Flame, Flower2, BarChart3 } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { Loader, OrbitControls } from "@react-three/drei";
 import { Ground } from "./Ground";
 import { Cursor } from "./Cursor";
+import { StatsOverlay } from "./StatsOverlay";
 import { Tooltip } from "./ui/Tooltip";
 import { ToggleGroup, ToggleButton } from "./ui/ToggleGroup";
-import type { Mode, SeededPlantData } from "./Grass";
+import type { GrassStat, Mode, SeedRequest } from "./Grass";
 import type { BisonPosition, BisonSpawn } from "./Bison";
 const PLANE_SIZE = 100;
 const PATCH_SIZE = 100;
@@ -39,9 +40,13 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [mode, setMode] = useState<Mode>(null);
   const [muted, setMuted] = useState(true);
-  const [seededPlants, setSeededPlants] = useState<SeededPlantData[]>([]);
+  const [statsOn, setStatsOn] = useState(false);
+  const [plantedCount, setPlantedCount] = useState(0);
   const [bisons, setBisons] = useState<BisonSpawn[]>([]);
   const bisonPositionsRef = useRef<BisonPosition[]>([]);
+  const grassStatsRef = useRef<GrassStat[]>([]);
+  const seedQueueRef = useRef<SeedRequest[]>([]);
+  const startedAtMs = useRef(performance.now()).current;
 
   const toggleMusic = () => {
     const el = audioRef.current;
@@ -57,13 +62,12 @@ export default function App() {
   };
 
   const handleSeed = (x: number, z: number) => {
-    setSeededPlants((prev) => [
-      ...prev,
-      {
-        typeIndex: Math.floor(Math.random() * SPRITES_COUNT),
-        position: [x, -10, z],
-      },
-    ]);
+    seedQueueRef.current.push({
+      typeIndex: Math.floor(Math.random() * SPRITES_COUNT),
+      x,
+      z,
+    });
+    setPlantedCount((c) => c + 1);
   };
 
   const handleSpawnBison = (x: number, z: number) => {
@@ -91,7 +95,7 @@ export default function App() {
         </Tooltip>
       </div>
 
-      <div className="absolute bottom-6 left-6 z-[10000]">
+      <div className="absolute bottom-6 left-6 z-[10000] flex gap-2">
         <Tooltip label={muted ? "play music" : "mute music"}>
           <ToggleButton
             pressed={!muted}
@@ -101,7 +105,25 @@ export default function App() {
             <Music size={20} strokeWidth={1.5} />
           </ToggleButton>
         </Tooltip>
+        <Tooltip label={statsOn ? "hide stats" : "show stats"}>
+          <ToggleButton
+            pressed={statsOn}
+            onClick={() => setStatsOn((v) => !v)}
+            ariaLabel="toggle stats"
+          >
+            <BarChart3 size={20} strokeWidth={1.5} />
+          </ToggleButton>
+        </Tooltip>
       </div>
+
+      {statsOn && (
+        <StatsOverlay
+          bisonCount={bisons.length}
+          seededCount={plantedCount}
+          grassStatsRef={grassStatsRef}
+          startedAtMs={startedAtMs}
+        />
+      )}
 
       <div className="absolute bottom-6 right-6 z-[10000]">
         <ToggleGroup<Exclude<Mode, null>>
@@ -161,11 +183,12 @@ export default function App() {
             patchSize={PATCH_SIZE}
             density={GRASS_DENSITY}
             onClickGrass={handleGrassClick}
-            seededPlants={seededPlants}
             onSeed={handleSeed}
             bisons={bisons}
             onSpawnBison={handleSpawnBison}
             bisonPositionsRef={bisonPositionsRef}
+            grassStatsRef={grassStatsRef}
+            seedQueueRef={seedQueueRef}
           />
         </Suspense>
         <ambientLight intensity={1} />

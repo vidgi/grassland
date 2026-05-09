@@ -1,6 +1,11 @@
 import { type MutableRefObject } from "react";
 import { type ThreeEvent } from "@react-three/fiber";
-import { Grass, SeededGrass, type Mode, type SeededPlantData } from "./Grass";
+import {
+  Grass,
+  type GrassStat,
+  type Mode,
+  type SeedRequest,
+} from "./Grass";
 import { BisonGroup, type BisonPosition, type BisonSpawn } from "./Bison";
 
 type GroundProps = {
@@ -9,11 +14,12 @@ type GroundProps = {
   patchSize: number;
   density: number;
   onClickGrass: () => void;
-  seededPlants: SeededPlantData[];
   onSeed: (x: number, z: number) => void;
   bisons: BisonSpawn[];
   onSpawnBison: (x: number, z: number) => void;
   bisonPositionsRef: MutableRefObject<BisonPosition[]>;
+  grassStatsRef: MutableRefObject<GrassStat[]>;
+  seedQueueRef: MutableRefObject<SeedRequest[]>;
 };
 
 export function Ground({
@@ -22,11 +28,12 @@ export function Ground({
   patchSize,
   density,
   onClickGrass,
-  seededPlants,
   onSeed,
   bisons,
   onSpawnBison,
   bisonPositionsRef,
+  grassStatsRef,
+  seedQueueRef,
 }: GroundProps) {
   const handlePlaneClick = (e: ThreeEvent<MouseEvent>) => {
     if (mode === "seed") {
@@ -46,12 +53,8 @@ export function Ground({
         mode={mode}
         onClickGrass={onClickGrass}
         bisonPositionsRef={bisonPositionsRef}
-      />
-      <SeededGrass
-        plants={seededPlants}
-        mode={mode}
-        onClickGrass={onClickGrass}
-        bisonPositionsRef={bisonPositionsRef}
+        grassStatsRef={grassStatsRef}
+        seedQueueRef={seedQueueRef}
       />
       <BisonGroup
         spawns={bisons}
