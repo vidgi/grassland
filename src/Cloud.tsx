@@ -1,13 +1,49 @@
 import {
-  useMemo,
   useRef,
   useState,
+  useMemo,
   type MutableRefObject,
 } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
-import { emojiTexture } from "./lib/emojiTexture";
+import { useFrame, useLoader } from "@react-three/fiber";
 import type { FireRequest } from "./Fire";
+import cloudSheetUrl from "./assets/sprites/cloud.png";
+import cloudMeta from "./assets/sprites/cloud.json";
+import lightningSheetUrl from "./assets/sprites/lightning.png";
+import lightningMeta from "./assets/sprites/lightning.json";
+
+function recolorTexture(
+  src: THREE.Texture,
+  r: number,
+  g: number,
+  b: number,
+  alphaBoost = 1,
+): THREE.Texture {
+  const img = src.image as HTMLImageElement;
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth || img.width;
+  canvas.height = img.naturalHeight || img.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < data.data.length; i += 4) {
+    const a = data.data[i + 3];
+    if (a > 0) {
+      data.data[i] = r;
+      data.data[i + 1] = g;
+      data.data[i + 2] = b;
+      data.data[i + 3] = Math.min(255, a * alphaBoost);
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.repeat.copy(src.repeat);
+  tex.offset.copy(src.offset);
+  tex.wrapS = src.wrapS;
+  tex.wrapT = src.wrapT;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
 
 type CloudRuntime = {
   id: number;
@@ -40,7 +76,7 @@ const CLOUD_SPAWN_INTERVAL_MAX_S = 25;
 const CLOUD_LIGHTNING_PROBABILITY = 0.3;
 const LIGHTNING_DELAY_MIN_S = 4;
 const LIGHTNING_DELAY_MAX_S = 12;
-const LIGHTNING_FLASH_S = 0.25;
+const LIGHTNING_FLASH_S = 0.5;
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -61,8 +97,30 @@ export function CloudGroup({
   fireQueueRef,
   cloudCountRef,
 }: CloudGroupProps) {
-  const cloudTexture = useMemo(() => emojiTexture("☁️", 256), []);
-  const lightningTexture = useMemo(() => emojiTexture("⚡", 128), []);
+  const cloudSheet = useLoader(THREE.TextureLoader, cloudSheetUrl);
+  const lightningSheet = useLoader(THREE.TextureLoader, lightningSheetUrl);
+
+  // configure sprite-sheet tiling once per texture
+  for (const [tex, meta] of [
+    [cloudSheet, cloudMeta],
+    [lightningSheet, lightningMeta],
+  ] as const) {
+    tex.repeat.set(1 / meta.frames, 1);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+  }
+
+  // white-remapped copy of the cloud sheet (RGB→white, alpha preserved)
+  const whiteCloudSheet = useMemo(
+    () => recolorTexture(cloudSheet, 255, 255, 255),
+    [cloudSheet],
+  );
+  // yellow-remapped lightning, with alpha boosted so middle isn't faded
+  const yellowLightningSheet = useMemo(
+    () => recolorTexture(lightningSheet, 255, 220, 90, 4),
+    [lightningSheet],
+  );
 
   const cloudsRef = useRef<CloudRuntime[]>([]);
   const lightningRef = useRef<LightningRuntime[]>([]);
@@ -180,6 +238,19 @@ export function CloudGroup({
       }
     }
 
+    // advance sprite-sheet frame for clouds and lightning
+    const cloudFrame = Math.floor(t * cloudMeta.fps) % cloudMeta.frames;
+    cloudSheet.offset.x = cloudFrame / cloudMeta.frames;
+    cloudSheet.needsUpdate = true;
+    whiteCloudSheet.offset.x = cloudSheet.offset.x;
+    whiteCloudSheet.needsUpdate = true;
+
+    const lightFrame = Math.floor(t * lightningMeta.fps) % lightningMeta.frames;
+    lightningSheet.offset.x = lightFrame / lightningMeta.frames;
+    lightningSheet.needsUpdate = true;
+    yellowLightningSheet.offset.x = lightningSheet.offset.x;
+    yellowLightningSheet.needsUpdate = true;
+
     if (cloudCountRef) cloudCountRef.current = clouds.length;
     if (changed) bumpVersion((v) => v + 1);
   });
@@ -196,30 +267,36 @@ export function CloudGroup({
           scale={[c.scale, c.scale * 0.6, 1]}
         >
           <spriteMaterial
-            map={cloudTexture}
+            map={whiteCloudSheet}
+            color={new THREE.Color(3, 3, 3)}
             transparent
-            opacity={0.9}
+            opacity={1.0}
             depthWrite={false}
           />
         </sprite>
       ))}
-      {lightningRef.current.map((f, i) => (
-        <sprite
-          key={`l${f.id}`}
-          position={[f.x, f.yTop * 0.5, f.z]}
-          scale={[10, f.yTop * 0.9, 1]}
-        >
-          <spriteMaterial
-            ref={(el) => {
-              lightningMatRefs.current[i] = el;
-            }}
-            map={lightningTexture}
-            transparent
-            opacity={1}
-            depthWrite={false}
-          />
-        </sprite>
-      ))}
+      {lightningRef.current.map((f, i) => {
+        const groundY = -10;
+        const height = f.yTop - groundY;
+        const centerY = (f.yTop + groundY) / 2;
+        return (
+          <sprite
+            key={`l${f.id}`}
+            position={[f.x, centerY, f.z]}
+            scale={[10, height, 1]}
+          >
+            <spriteMaterial
+              ref={(el) => {
+                lightningMatRefs.current[i] = el;
+              }}
+              map={yellowLightningSheet}
+              color={new THREE.Color(2, 2, 1.5)}
+              transparent
+              depthWrite={false}
+            />
+          </sprite>
+        );
+      })}
     </>
   );
 }

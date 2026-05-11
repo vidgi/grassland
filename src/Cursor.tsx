@@ -4,7 +4,7 @@ import type { Mode } from "./Grass";
 import fireGif from "./img/fire.gif";
 import grazeGif from "./img/graze.gif";
 import growGif from "./img/grow.gif";
-import seedGif from "./img/seed.gif";
+import seedGif from "./img/seed.png";
 
 const MODE_GIF: Record<Exclude<Mode, null>, string> = {
   fire: fireGif,

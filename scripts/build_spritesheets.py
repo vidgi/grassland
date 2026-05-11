@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Build horizontal sprite-sheet PNGs (+ JSON metadata) from GIFs.
+"""Build horizontal sprite-sheet PNGs (+ JSON metadata) from GIFs and APNGs.
 
-For each GIF in --in, decode every frame, normalize to RGBA at the GIF's
-canvas size, and paste horizontally into a strip image. Each output sheet
-gets a sibling JSON file recording the frame count, frame dimensions,
-the GIF's true average fps (computed from per-frame durations), and the
-full list of per-frame durations in milliseconds.
+For each GIF or animated PNG in --in, decode every frame, normalize to RGBA
+at the source canvas size, and paste horizontally into a strip image. Each
+output sheet gets a sibling JSON file recording the frame count, frame
+dimensions, the source's true average fps (computed from per-frame
+durations), and the full list of per-frame durations in milliseconds.
 
-Idempotent: skips a GIF if the output PNG is newer than the source.
+Idempotent: skips a source file if the output PNG is newer than the source.
 """
 
 from __future__ import annotations
@@ -95,16 +95,25 @@ def stitch(gif_path: Path, out_dir: Path, max_edge: int | None) -> dict:
     return meta
 
 
-def is_up_to_date(gif_path: Path, out_dir: Path) -> bool:
-    out_png = out_dir / f"{gif_path.stem}.png"
-    out_json = out_dir / f"{gif_path.stem}.json"
+def is_up_to_date(src_path: Path, out_dir: Path) -> bool:
+    out_png = out_dir / f"{src_path.stem}.png"
+    out_json = out_dir / f"{src_path.stem}.json"
     if not out_png.exists() or not out_json.exists():
         return False
-    src_mtime = gif_path.stat().st_mtime
+    src_mtime = src_path.stat().st_mtime
     return (
         out_png.stat().st_mtime >= src_mtime
         and out_json.stat().st_mtime >= src_mtime
     )
+
+
+def is_animated_png(path: Path) -> bool:
+    """Return True if the PNG has more than one frame (i.e. is an APNG)."""
+    try:
+        img = Image.open(path)
+        return getattr(img, "n_frames", 1) > 1
+    except Exception:
+        return False
 
 
 def main() -> int:
@@ -115,7 +124,7 @@ def main() -> int:
         dest="in_dir",
         type=Path,
         default=repo_root / "src" / "img",
-        help="directory of source GIFs",
+        help="directory of source GIFs / APNGs",
     )
     parser.add_argument(
         "--out",
@@ -139,13 +148,13 @@ def main() -> int:
         "--include",
         nargs="*",
         default=None,
-        help="optional list of GIF basenames (without .gif) to include",
+        help="optional list of basenames (without extension) to include",
     )
     parser.add_argument(
         "--exclude",
         nargs="*",
         default=["fire", "graze", "grow", "seed"],
-        help="GIF basenames to skip (default: UI overlay GIFs)",
+        help="basenames to skip (default: UI overlay assets)",
     )
     parser.add_argument(
         "--no-index",
@@ -158,29 +167,33 @@ def main() -> int:
     out_dir: Path = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    gifs = sorted(in_dir.glob("*.gif"))
+    # collect GIFs and animated PNGs (APNGs)
+    candidates: list[Path] = sorted(in_dir.glob("*.gif")) + [
+        p for p in sorted(in_dir.glob("*.png")) if is_animated_png(p)
+    ]
+
     if args.include is not None:
         wanted = {n.lower() for n in args.include}
-        gifs = [g for g in gifs if g.stem.lower() in wanted]
+        candidates = [c for c in candidates if c.stem.lower() in wanted]
     elif args.exclude:
         skip = {n.lower() for n in args.exclude}
-        gifs = [g for g in gifs if g.stem.lower() not in skip]
+        candidates = [c for c in candidates if c.stem.lower() not in skip]
 
-    if not gifs:
-        print(f"no gifs found in {in_dir}", file=sys.stderr)
+    if not candidates:
+        print(f"no animated sources found in {in_dir}", file=sys.stderr)
         return 1
 
-    print(f"building sprite sheets for {len(gifs)} gif(s) -> {out_dir}")
+    print(f"building sprite sheets for {len(candidates)} source(s) -> {out_dir}")
 
     index = []
-    for gif in gifs:
-        if not args.force and is_up_to_date(gif, out_dir):
-            print(f"  skip {gif.name} (up to date)")
-            json_path = out_dir / f"{gif.stem}.json"
+    for src in candidates:
+        if not args.force and is_up_to_date(src, out_dir):
+            print(f"  skip {src.name} (up to date)")
+            json_path = out_dir / f"{src.stem}.json"
             index.append(json.loads(json_path.read_text()))
             continue
-        print(f"  build {gif.name}")
-        meta = stitch(gif, out_dir, args.max_edge)
+        print(f"  build {src.name}")
+        meta = stitch(src, out_dir, args.max_edge)
         index.append(meta)
 
     if args.no_index:

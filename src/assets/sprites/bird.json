@@ -1,0 +1,12 @@
+{
+  "name": "bird",
+  "frames": 2,
+  "frameWidth": 786,
+  "frameHeight": 890,
+  "fps": 4.902,
+  "frameDurationsMs": [
+    204,
+    204
+  ],
+  "image": "bird.png"
+}

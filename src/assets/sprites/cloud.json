@@ -1,0 +1,13 @@
+{
+  "name": "cloud",
+  "frames": 3,
+  "frameWidth": 886,
+  "frameHeight": 441,
+  "fps": 4.902,
+  "frameDurationsMs": [
+    204,
+    204,
+    204
+  ],
+  "image": "cloud.png"
+}

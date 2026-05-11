@@ -1,0 +1,12 @@
+{
+  "name": "lightning",
+  "frames": 2,
+  "frameWidth": 331,
+  "frameHeight": 1175,
+  "fps": 6.0606,
+  "frameDurationsMs": [
+    165,
+    165
+  ],
+  "image": "lightning.png"
+}

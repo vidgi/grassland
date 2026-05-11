@@ -5,7 +5,9 @@ import {
   type MutableRefObject,
 } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useLoader } from "@react-three/fiber";
+import birdSheetUrl from "./assets/sprites/bird.png";
+import birdMeta from "./assets/sprites/bird.json";
 import { emojiTexture } from "./lib/emojiTexture";
 import {
   SPRITE_TYPE_COUNT,
@@ -60,7 +62,8 @@ const PERCH_MIN_TARGET_SCALE = 1.2;
 const PERCH_DENSITY_RADIUS_SQ = 25;
 const PERCH_DENSITY_MIN = 4;
 const SEED_FLASH_LIFETIME_S = 0.5;
-const BIRD_SCALE = 1.6;
+const BIRD_SCALE = 3.5;
+const BIRD_ASPECT = birdMeta.frameWidth / birdMeta.frameHeight;
 const SEED_FLASH_SCALE = 0.8;
 
 function rand(min: number, max: number): number {
@@ -117,7 +120,10 @@ export function BirdGroup({
   seedQueueRef,
   birdCountRef,
 }: BirdGroupProps) {
-  const birdTexture = useMemo(() => emojiTexture("🐦", 128), []);
+  const birdSheet = useLoader(THREE.TextureLoader, birdSheetUrl);
+  birdSheet.repeat.set(1 / birdMeta.frames, 1);
+  birdSheet.wrapS = THREE.ClampToEdgeWrapping;
+  birdSheet.wrapT = THREE.ClampToEdgeWrapping;
   const seedTexture = useMemo(() => emojiTexture("🌱", 64), []);
 
   const runtimeRef = useRef<BirdRuntime[]>([]);
@@ -343,6 +349,11 @@ export function BirdGroup({
       }
     }
 
+    // advance bird sprite-sheet frame
+    const birdFrame = Math.floor(t * birdMeta.fps) % birdMeta.frames;
+    birdSheet.offset.x = birdFrame / birdMeta.frames;
+    birdSheet.needsUpdate = true;
+
     if (birdCountRef) birdCountRef.current = rts.length;
     if (changed) bumpVersion((v) => v + 1);
   });
@@ -356,9 +367,9 @@ export function BirdGroup({
             spriteRefs.current[i] = el;
           }}
           position={[b.x, b.y, b.z]}
-          scale={[BIRD_SCALE, BIRD_SCALE, 1]}
+          scale={[BIRD_SCALE * BIRD_ASPECT, BIRD_SCALE, 1]}
         >
-          <spriteMaterial map={birdTexture} transparent depthWrite={false} />
+          <spriteMaterial map={birdSheet} transparent depthWrite={false} />
         </sprite>
       ))}
       {flashRef.current.map((f, i) => (
@@ -394,6 +405,7 @@ type DwellerRuntime = {
   targetX: number;
   targetZ: number;
   retargetAt: number;
+  flip: boolean;
   // hop state — progress [0..1] through a single hop arc
   hopProgress: number; // -1 = idle (at rest)
   hopStartX: number;
@@ -403,8 +415,9 @@ type DwellerRuntime = {
 };
 
 const MAX_DWELLERS = 10;
-const DWELLER_SCALE = 0.9;
-const DWELLER_GROUND_Y = -9.6;  // resting y
+const DWELLER_SCALE = 4.5;
+const BIRD_GROUND_Y = -9.65;
+const DWELLER_GROUND_Y = BIRD_GROUND_Y + DWELLER_SCALE / 2 - 1.2; // center so bottom = ground
 const DWELLER_HOP_PEAK_MIN = 0.4;
 const DWELLER_HOP_PEAK_MAX = 1.2;
 const DWELLER_HOP_SPEED_MIN = 1.8; // progress/s — controls hop duration
@@ -420,7 +433,10 @@ type DwellerGroupProps = {
 };
 
 export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: DwellerGroupProps) {
-  const texture = useMemo(() => emojiTexture("🐦", 96), []);
+  const texture = useLoader(THREE.TextureLoader, birdSheetUrl);
+  texture.repeat.set(1 / birdMeta.frames, 1);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
   const runtimeRef = useRef<DwellerRuntime[]>([]);
   const spriteRefs = useRef<Array<THREE.Sprite | null>>([]);
   const nextIdRef = useRef(0);
@@ -444,6 +460,7 @@ export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: Dwe
         x, y: DWELLER_GROUND_Y, z,
         targetX: x, targetZ: z,
         retargetAt: t + Math.random() * 2,
+        flip: Math.random() < 0.5,
         hopProgress: -1,
         hopStartX: x, hopStartZ: z,
         hopPeak: 0.7, hopSpeed: 2.2,
@@ -505,6 +522,7 @@ export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: Dwe
         if (dx * dx + dz * dz > DWELLER_REACH_SQ) {
           d.hopStartX = d.x;
           d.hopStartZ = d.z;
+          d.flip = dx < 0; // face left when moving in negative X direction
           d.hopPeak = DWELLER_HOP_PEAK_MIN + Math.random() * (DWELLER_HOP_PEAK_MAX - DWELLER_HOP_PEAK_MIN);
           d.hopSpeed = DWELLER_HOP_SPEED_MIN + Math.random() * (DWELLER_HOP_SPEED_MAX - DWELLER_HOP_SPEED_MIN);
           d.hopProgress = 0;
@@ -519,6 +537,11 @@ export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: Dwe
       if (sprite) sprite.position.set(d.x, d.y, d.z);
     }
 
+    // advance dweller sprite-sheet frame (same sheet as flying birds)
+    const dwellerFrame = Math.floor(t * birdMeta.fps) % birdMeta.frames;
+    texture.offset.x = dwellerFrame / birdMeta.frames;
+    texture.needsUpdate = true;
+
     if (changed) bumpVersion((v) => v + 1);
   });
 
@@ -529,9 +552,9 @@ export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: Dwe
           key={d.id}
           ref={(el) => { spriteRefs.current[i] = el; }}
           position={[d.x, d.y, d.z]}
-          scale={[DWELLER_SCALE, DWELLER_SCALE, 1]}
+          scale={[(d.flip ? -1 : 1) * DWELLER_SCALE * BIRD_ASPECT, DWELLER_SCALE, 1]}
         >
-          <spriteMaterial map={texture} transparent opacity={0.75} depthWrite={false} />
+          <spriteMaterial map={texture} color={new THREE.Color(0.55, 0.55, 0.55)} transparent depthWrite={false} />
         </sprite>
       ))}
     </>

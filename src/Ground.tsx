@@ -11,7 +11,7 @@ import { BisonGroup, type BisonPosition, type BisonSpawn } from "./Bison";
 import { FireGroup, type FirePosition, type FireRequest } from "./Fire";
 import { CloudGroup } from "./Cloud";
 import { ButterflyGroup, type PollinatorPosition } from "./Butterfly";
-import { BirdGroup, DwellerGroup } from "./Bird";
+import { /* BirdGroup, */ DwellerGroup } from "./Bird";
 
 type GroundProps = {
   mode: Mode;
@@ -57,7 +57,7 @@ export function Ground({
   fireCountRef,
   pollinatorPositionsRef,
   butterflyCountRef,
-  birdCountRef,
+  birdCountRef: _birdCountRef,
   dwellerCountRef,
   cloudCountRef,
   grassStatsRef,
@@ -117,12 +117,12 @@ export function Ground({
         pollinatorPositionsRef={pollinatorPositionsRef}
         butterflyCountRef={butterflyCountRef}
       />
-      <BirdGroup
+      {/* <BirdGroup
         bounds={patchSize}
         grassPositionsRef={grassPositionsRef}
         seedQueueRef={seedQueueRef}
         birdCountRef={birdCountRef}
-      />
+      /> */}
       <DwellerGroup
         bounds={patchSize}
         grassPositionsRef={grassPositionsRef}

@@ -216,6 +216,7 @@ export function FireGroup({
       const req = queue.shift()!;
       const cid = nextConflagrationIdRef.current++;
       rts.push(spawnRuntime(req.x, req.z, cid, t));
+      if (fireCountRef) fireCountRef.current += 1;
       changed = true;
     }
 
@@ -258,6 +259,7 @@ export function FireGroup({
         rts.push(spawnRuntime(cx, cz, r.conflagrationId, t));
         r.spawnedChildren++;
         r.spreadAt = t + nextSpreadDelay();
+        if (fireCountRef) fireCountRef.current += 1;
         changed = true;
       }
 
@@ -321,7 +323,6 @@ export function FireGroup({
       entry.z = r.z;
       entry.radius = r.radius;
     }
-    if (fireCountRef) fireCountRef.current = rts.length;
 
     // 4) sprite pose updates
     for (let i = 0; i < rts.length; i++) {
