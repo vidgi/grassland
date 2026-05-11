@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import type { GrassStat } from "./Grass";
+import type { BisonPosition } from "./Bison";
 
 type Sample = { t: number; biomass: number };
 
@@ -10,6 +11,12 @@ type StatsOverlayProps = {
   bisonCount: number;
   seededCount: number;
   grassStatsRef: MutableRefObject<GrassStat[]>;
+  bisonPositionsRef: MutableRefObject<BisonPosition[]>;
+  cloudCountRef: MutableRefObject<number>;
+  butterflyCountRef: MutableRefObject<number>;
+  birdCountRef: MutableRefObject<number>;
+  dwellerCountRef: MutableRefObject<number>;
+  fireCountRef: MutableRefObject<number>;
   startedAtMs: number;
 };
 
@@ -26,6 +33,12 @@ export function StatsOverlay({
   bisonCount,
   seededCount,
   grassStatsRef,
+  bisonPositionsRef,
+  cloudCountRef,
+  butterflyCountRef,
+  birdCountRef,
+  dwellerCountRef,
+  fireCountRef,
   startedAtMs,
 }: StatsOverlayProps) {
   const [, setTick] = useState(0);
@@ -87,6 +100,31 @@ export function StatsOverlay({
           <Row label={"\u0394/min"} value={`${slopeStr} sq ft`} />
         </div>
       </div>
+      <div className="my-1 border-t border-[#708558]/30" />
+      <div className="opacity-60 mb-1 tracking-wide">ecology</div>
+      <div className="grid grid-cols-2 gap-x-4">
+        <div>
+          <Row label="clouds" value={cloudCountRef.current} />
+          <Row label="butterflies" value={butterflyCountRef.current} />
+        </div>
+        <div>
+          <Row label="birds" value={birdCountRef.current + dwellerCountRef.current} />
+          <Row label="fires" value={fireCountRef.current} />
+        </div>
+      </div>
+      {(() => {
+        const list = bisonPositionsRef.current;
+        if (list.length === 0) return null;
+        let total = 0;
+        for (let i = 0; i < list.length; i++) total += list[i].fullness;
+        const avg = total / list.length;
+        return (
+          <Row
+            label="avg fullness"
+            value={`${Math.round(avg * 100)}%`}
+          />
+        );
+      })()}
       <div className="my-1 border-t border-[#708558]/30" />
       <Row label="time" value={`${mm}:${ss}`} />
     </div>

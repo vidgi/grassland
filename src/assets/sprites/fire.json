@@ -1,0 +1,13 @@
+{
+  "name": "fire",
+  "frames": 3,
+  "frameWidth": 437,
+  "frameHeight": 741,
+  "fps": 5.2632,
+  "frameDurationsMs": [
+    190,
+    190,
+    190
+  ],
+  "image": "fire.png"
+}

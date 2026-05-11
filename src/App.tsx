@@ -7,7 +7,10 @@ import { Cursor } from "./Cursor";
 import { StatsOverlay } from "./StatsOverlay";
 import { Tooltip } from "./ui/Tooltip";
 import { ToggleGroup, ToggleButton } from "./ui/ToggleGroup";
-import type { GrassStat, Mode, SeedRequest } from "./Grass";
+import { SPRITE_TYPE_COUNT } from "./Grass";
+import type { GrassPosEntry, GrassStat, Mode, SeedRequest } from "./Grass";
+import type { FirePosition, FireRequest } from "./Fire";
+import type { PollinatorPosition } from "./Butterfly";
 import type { BisonPosition, BisonSpawn } from "./Bison";
 const PLANE_SIZE = 100;
 const PATCH_SIZE = 100;
@@ -34,8 +37,6 @@ function GrazeIcon() {
   );
 }
 
-const SPRITES_COUNT = 32; // total sprite types in index.json
-
 export default function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [mode, setMode] = useState<Mode>(null);
@@ -45,8 +46,18 @@ export default function App() {
   const [bisons, setBisons] = useState<BisonSpawn[]>([]);
   const bisonPositionsRef = useRef<BisonPosition[]>([]);
   const grassStatsRef = useRef<GrassStat[]>([]);
+  const grassPositionsRef = useRef<GrassPosEntry[][]>([]);
   const seedQueueRef = useRef<SeedRequest[]>([]);
+  const fireQueueRef = useRef<FireRequest[]>([]);
+  const firePositionsRef = useRef<FirePosition[]>([]);
+  const fireCountRef = useRef(0);
+  const pollinatorPositionsRef = useRef<PollinatorPosition[]>([]);
+  const butterflyCountRef = useRef(0);
+  const birdCountRef = useRef(0);
+  const dwellerCountRef = useRef(0);
+  const cloudCountRef = useRef(0);
   const startedAtMs = useRef(performance.now()).current;
+  const nextBisonIdRef = useRef(0);
 
   const toggleMusic = () => {
     const el = audioRef.current;
@@ -63,7 +74,7 @@ export default function App() {
 
   const handleSeed = (x: number, z: number) => {
     seedQueueRef.current.push({
-      typeIndex: Math.floor(Math.random() * SPRITES_COUNT),
+      typeIndex: Math.floor(Math.random() * SPRITE_TYPE_COUNT),
       x,
       z,
     });
@@ -71,7 +82,24 @@ export default function App() {
   };
 
   const handleSpawnBison = (x: number, z: number) => {
-    setBisons((prev) => [...prev, { initialX: x, initialZ: z }]);
+    const id = nextBisonIdRef.current++;
+    setBisons((prev) => [...prev, { id, initialX: x, initialZ: z }]);
+  };
+
+  const handleSpawnCalf = (x: number, z: number) => {
+    const id = nextBisonIdRef.current++;
+    setBisons((prev) => [
+      ...prev,
+      { id, initialX: x, initialZ: z, isCalf: true },
+    ]);
+  };
+
+  const handleBisonLeave = (id: number) => {
+    setBisons((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const handleSpawnFire = (x: number, z: number) => {
+    fireQueueRef.current.push({ x, z });
   };
 
   return (
@@ -121,6 +149,12 @@ export default function App() {
           bisonCount={bisons.length}
           seededCount={plantedCount}
           grassStatsRef={grassStatsRef}
+          bisonPositionsRef={bisonPositionsRef}
+          cloudCountRef={cloudCountRef}
+          butterflyCountRef={butterflyCountRef}
+          birdCountRef={birdCountRef}
+          dwellerCountRef={dwellerCountRef}
+          fireCountRef={fireCountRef}
           startedAtMs={startedAtMs}
         />
       )}
@@ -184,10 +218,22 @@ export default function App() {
             density={GRASS_DENSITY}
             onClickGrass={handleGrassClick}
             onSeed={handleSeed}
+            onSpawnFire={handleSpawnFire}
             bisons={bisons}
             onSpawnBison={handleSpawnBison}
+            onBisonLeave={handleBisonLeave}
+            onSpawnCalf={handleSpawnCalf}
             bisonPositionsRef={bisonPositionsRef}
+            firePositionsRef={firePositionsRef}
+            fireQueueRef={fireQueueRef}
+            fireCountRef={fireCountRef}
+            pollinatorPositionsRef={pollinatorPositionsRef}
+            butterflyCountRef={butterflyCountRef}
+            birdCountRef={birdCountRef}
+            dwellerCountRef={dwellerCountRef}
+            cloudCountRef={cloudCountRef}
             grassStatsRef={grassStatsRef}
+            grassPositionsRef={grassPositionsRef}
             seedQueueRef={seedQueueRef}
           />
         </Suspense>

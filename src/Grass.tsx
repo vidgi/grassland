@@ -4,6 +4,8 @@ import { useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
 import { createGrassMaterial } from "./GrassMaterial";
 import indexJson from "./assets/sprites/index.json";
 import type { BisonPosition } from "./Bison";
+import type { FirePosition } from "./Fire";
+import type { PollinatorPosition } from "./Butterfly";
 
 export type Mode = "grow" | "bison" | "fire" | "seed" | null;
 
@@ -24,6 +26,18 @@ export type GrassStat = {
   tallestFt: number; // height in ft of the tallest live plant in this type
 };
 
+// Per-type live plant positions, written every graze tick by GrassType so
+// downstream agents (bison hunger seeking, butterflies, bird perching) can
+// query "where are the live tall plants right now". Entries are reused
+// in-place across ticks to avoid GC churn.
+export type GrassPosEntry = {
+  x: number;
+  z: number;
+  targetScale: number;
+  heightFt: number;
+  topY: number; // world-space Y at top of plant (for bird perching)
+};
+
 type SpriteMeta = {
   name: string;
   frames: number;
@@ -34,6 +48,7 @@ type SpriteMeta = {
 };
 
 const SPRITES = indexJson as SpriteMeta[];
+export const SPRITE_TYPE_COUNT = SPRITES.length;
 
 const PNG_URLS = import.meta.glob("./assets/sprites/*.png", {
   eager: true,
@@ -56,6 +71,7 @@ const WORLD_HEIGHT = 30;
 const WORLD_PER_PIXEL = WORLD_HEIGHT / TALLEST_FRAME_HEIGHT;
 const GROUND_Y = -10;
 const OPACITY_DEFAULT = 0.7;
+const OPACITY_DENSE = 0.25; // opacity floor when patch is at full capacity
 const OPACITY_HOVER = 1.0;
 
 const BISON_GRAZE_RADIUS = 6;
@@ -70,8 +86,10 @@ const GRAZE_DECAY = 0.97;
 const DEATH_HEIGHT_FT = 1.0;
 
 // Propagation: pick a healthy existing grass and spawn a seedling near it.
-const PROPAGATION_INTERVAL_MIN = 4;
-const PROPAGATION_INTERVAL_MAX = 8;
+// Slightly slower than before — birds + post-fire renewal now contribute
+// new seedlings, so the patch can rely less on autonomous propagation.
+const PROPAGATION_INTERVAL_MIN = 6;
+const PROPAGATION_INTERVAL_MAX = 12;
 const PROPAGATION_PARENT_MIN_TARGET = 0.5;
 const PROPAGATION_DISTANCE_MIN = 2.5;
 const PROPAGATION_DISTANCE_MAX = 5.5;
@@ -93,6 +111,12 @@ const MAX_CAPACITY_MULT = 30;
 const GROWTH_INTERVAL = 60;
 const GROWTH_RATE = 1.05;
 const MAX_GROW_SCALE = 6;
+
+// Pollinator boost. Plants within sqrt(POLLINATOR_BOOST_RADIUS_SQ) world
+// units of any butterfly get a small target-scale multiplier each graze
+// tick. Capped at MAX_GROW_SCALE so it can't run away.
+const POLLINATOR_BOOST_RADIUS_SQ = 4;
+const POLLINATOR_BOOST_PER_TICK = 1.005;
 
 // Stats classification.
 const LIVE_THRESHOLD = 0.05;
@@ -118,7 +142,10 @@ type GrassProps = {
   mode: Mode;
   onClickGrass: () => void;
   bisonPositionsRef: MutableRefObject<BisonPosition[]>;
+  firePositionsRef: MutableRefObject<FirePosition[]>;
+  pollinatorPositionsRef: MutableRefObject<PollinatorPosition[]>;
   grassStatsRef: MutableRefObject<GrassStat[]>;
+  grassPositionsRef: MutableRefObject<GrassPosEntry[][]>;
   seedQueueRef: MutableRefObject<SeedRequest[]>;
 };
 
@@ -128,10 +155,24 @@ export function Grass({
   mode,
   onClickGrass,
   bisonPositionsRef,
+  firePositionsRef,
+  pollinatorPositionsRef,
   grassStatsRef,
+  grassPositionsRef,
   seedQueueRef,
 }: GrassProps) {
   const perType = Math.max(1, Math.round(density / SPRITES.length));
+  const maxTotalCapacity = perType * MAX_CAPACITY_MULT * SPRITES.length;
+  const totalLiveRef = useRef(0);
+
+  useFrame(() => {
+    let total = 0;
+    for (const stat of grassStatsRef.current) {
+      if (stat) total += stat.live;
+    }
+    totalLiveRef.current = total;
+  });
+
   return (
     <>
       {SPRITES.map((meta, idx) => (
@@ -144,8 +185,13 @@ export function Grass({
           mode={mode}
           onClickGrass={onClickGrass}
           bisonPositionsRef={bisonPositionsRef}
+          firePositionsRef={firePositionsRef}
+          pollinatorPositionsRef={pollinatorPositionsRef}
           grassStatsRef={grassStatsRef}
+          grassPositionsRef={grassPositionsRef}
           seedQueueRef={seedQueueRef}
+          totalLiveRef={totalLiveRef}
+          maxTotalCapacity={maxTotalCapacity}
         />
       ))}
     </>
@@ -160,8 +206,13 @@ type GrassTypeProps = {
   mode: Mode;
   onClickGrass: () => void;
   bisonPositionsRef: MutableRefObject<BisonPosition[]>;
+  firePositionsRef: MutableRefObject<FirePosition[]>;
+  pollinatorPositionsRef: MutableRefObject<PollinatorPosition[]>;
   grassStatsRef: MutableRefObject<GrassStat[]>;
+  grassPositionsRef: MutableRefObject<GrassPosEntry[][]>;
   seedQueueRef: MutableRefObject<SeedRequest[]>;
+  totalLiveRef: MutableRefObject<number>;
+  maxTotalCapacity: number;
 };
 
 function GrassType({
@@ -172,8 +223,13 @@ function GrassType({
   mode,
   onClickGrass,
   bisonPositionsRef,
+  firePositionsRef,
+  pollinatorPositionsRef,
   grassStatsRef,
+  grassPositionsRef,
   seedQueueRef,
+  totalLiveRef,
+  maxTotalCapacity,
 }: GrassTypeProps) {
   const url = useMemo(() => urlFor(meta.name), [meta.name]);
   const texture = useLoader(THREE.TextureLoader, url) as THREE.Texture;
@@ -312,9 +368,34 @@ function GrassType({
       tallestFt: maxT * heightFtAtScale1,
     };
 
+    // initialize live-position registry slot for this type
+    const posList: GrassPosEntry[] = [];
+    for (let i = 0; i < count; i++) {
+      const s = scaleArr[i];
+      posList.push({
+        x: posArr[i * 2],
+        z: posArr[i * 2 + 1],
+        targetScale: s,
+        heightFt: s * heightFtAtScale1,
+        topY: GROUND_Y + planeH * s,
+      });
+    }
+    grassPositionsRef.current[typeIndex] = posList;
+
     mesh.frustumCulled = false;
     mesh.count = count;
-  }, [count, patchSize, geometry, maxCapacity, tmpObj, typeIndex, grassStatsRef]);
+  }, [
+    count,
+    patchSize,
+    geometry,
+    maxCapacity,
+    tmpObj,
+    typeIndex,
+    grassStatsRef,
+    grassPositionsRef,
+    areaPerT2,
+    heightFtAtScale1,
+  ]);
 
   useFrame((state, dt) => {
     material.uniforms.uTime.value = state.clock.elapsedTime;
@@ -330,27 +411,64 @@ function GrassType({
     const active = activeCountRef.current;
     const pos = posArrRef.current;
 
-    // bison grazing tick + stats accumulation
+    // bison grazing + fire burning + pollinator boost tick + stats accumulation
     grazeTickRef.current -= dt;
     if (grazeTickRef.current <= 0) {
       grazeTickRef.current = GRAZE_TICK_INTERVAL;
       const bisons = bisonPositionsRef.current;
+      const fires = firePositionsRef.current;
+      const pollinators = pollinatorPositionsRef.current;
 
       let live = 0;
       let areaT2 = 0;
       let maxT = 0;
 
+      // reuse the registry array in place to avoid per-tick GC
+      const posList =
+        grassPositionsRef.current[typeIndex] ??
+        (grassPositionsRef.current[typeIndex] = []);
+      let posListN = 0;
+
       for (let i = 0; i < active; i++) {
         const t = tgt[i];
+        const px = pos[i * 2];
+        const pz = pos[i * 2 + 1];
+
         if (t > LIVE_THRESHOLD) {
           live++;
           areaT2 += t * t;
           if (t > maxT) maxT = t;
+
+          let entry = posList[posListN];
+          if (!entry) {
+            entry = { x: 0, z: 0, targetScale: 0, heightFt: 0, topY: 0 };
+            posList[posListN] = entry;
+          }
+          entry.x = px;
+          entry.z = pz;
+          entry.targetScale = t;
+          entry.heightFt = t * heightFtAtScale1;
+          entry.topY = GROUND_Y + planeH * t;
+          posListN++;
         }
 
-        if (bisons.length > 0) {
-          const px = pos[i * 2];
-          const pz = pos[i * 2 + 1];
+        // fire burns first — a plant inside any fire footprint dies outright,
+        // freeing the slot for post-fire renewal seedlings.
+        let burned = false;
+        if (fires.length > 0) {
+          for (let f = 0; f < fires.length; f++) {
+            const fr = fires[f];
+            const dx = px - fr.x;
+            const dz = pz - fr.z;
+            if (dx * dx + dz * dz < fr.radius * fr.radius) {
+              tgt[i] = 0;
+              burned = true;
+              break;
+            }
+          }
+        }
+
+        if (!burned && bisons.length > 0) {
           for (let b = 0; b < bisons.length; b++) {
             const dx = px - bisons[b].x;
             const dz = pz - bisons[b].z;
@@ -362,7 +480,24 @@ function GrassType({
             }
           }
         }
+
+        // pollinator boost: any plant within radius of a butterfly gets a
+        // small target-scale multiplier (capped at MAX_GROW_SCALE).
+        if (!burned && pollinators.length > 0 && tgt[i] > LIVE_THRESHOLD) {
+          for (let p = 0; p < pollinators.length; p++) {
+            const dx = px - pollinators[p].x;
+            const dz = pz - pollinators[p].z;
+            if (dx * dx + dz * dz < POLLINATOR_BOOST_RADIUS_SQ) {
+              tgt[i] = Math.min(
+                tgt[i] * POLLINATOR_BOOST_PER_TICK,
+                MAX_GROW_SCALE
+              );
+              break;
+            }
+          }
+        }
       }
+      posList.length = posListN;
 
       const stat = grassStatsRef.current[typeIndex];
       if (stat) {
@@ -370,6 +505,20 @@ function GrassType({
         stat.biomass = areaT2 * areaPerT2;
         stat.tallestFt = maxT * heightFtAtScale1;
       }
+
+      // density-based opacity: as total live plants approach max capacity,
+      // fade non-hovered instances toward OPACITY_DENSE.
+      const densityT = Math.min(1, totalLiveRef.current / maxTotalCapacity);
+      const baseOpacity =
+        OPACITY_DEFAULT + densityT * (OPACITY_DENSE - OPACITY_DEFAULT);
+      const opArr = opacityAttr.array as Float32Array;
+      for (let i = 0; i < active; i++) {
+        // only overwrite instances that are not currently hovered (hover = 1.0)
+        if (opArr[i] < OPACITY_HOVER) {
+          opArr[i] = tgt[i] > LIVE_THRESHOLD ? baseOpacity : 0;
+        }
+      }
+      opacityAttr.needsUpdate = true;
     }
 
     // slow regrowth — every ~minute, bump all live targets up a bit
@@ -585,14 +734,22 @@ function GrassType({
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     const id = e.instanceId;
     const m = modeRef.current;
-    if (id === undefined || m === null || m === "seed" || m === "bison") return;
+    // fire mode now spawns a spreading fire entity at the ground point, so
+    // we let the click bubble through to the ground plane handler.
+    if (
+      id === undefined ||
+      m === null ||
+      m === "seed" ||
+      m === "bison" ||
+      m === "fire"
+    )
+      return;
     e.stopPropagation();
 
     const targets = targetScalesRef.current;
 
     let next = targets[id];
     if (m === "grow") next = Math.min(next * 1.5, 6);
-    else if (m === "fire") next = 0;
 
     targets[id] = next;
     onClickGrass();
