@@ -1,12 +1,12 @@
 import {
-  useMemo,
   useRef,
   useState,
   type MutableRefObject,
 } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
-import { emojiTexture } from "./lib/emojiTexture";
+import { useFrame, useLoader } from "@react-three/fiber";
+import butterflySheetUrl from "./assets/sprites/butterfly.png";
+import butterflyMeta from "./assets/sprites/butterfly.json";
 import type { GrassPosEntry } from "./Grass";
 
 export type PollinatorPosition = { x: number; z: number };
@@ -36,7 +36,9 @@ const FLUTTER_AMP = 0.4;
 const RETARGET_INTERVAL_MIN_S = 2;
 const RETARGET_INTERVAL_MAX_S = 4;
 const REACH_RADIUS_SQ = 0.6 * 0.6;
-const BUTTERFLY_SCALE = 1.5;
+const BUTTERFLY_SCALE = 1.1;
+const BUTTERFLY_ASPECT =
+  butterflyMeta.frameWidth / butterflyMeta.frameHeight;
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -76,7 +78,11 @@ export function ButterflyGroup({
   pollinatorPositionsRef,
   butterflyCountRef,
 }: ButterflyGroupProps) {
-  const texture = useMemo(() => emojiTexture("🦋", 128), []);
+  const texture = useLoader(THREE.TextureLoader, butterflySheetUrl);
+  texture.repeat.set(1 / butterflyMeta.frames, 1);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.colorSpace = THREE.SRGBColorSpace;
 
   const runtimeRef = useRef<ButterflyRuntime[]>([]);
   const spriteRefs = useRef<Array<THREE.Sprite | null>>([]);
@@ -176,6 +182,12 @@ export function ButterflyGroup({
     }
     if (butterflyCountRef) butterflyCountRef.current = rts.length;
 
+    // advance sprite-sheet frame
+    const frame =
+      Math.floor(t * butterflyMeta.fps) % butterflyMeta.frames;
+    texture.offset.x = frame / butterflyMeta.frames;
+    texture.needsUpdate = true;
+
     if (changed) bumpVersion((v) => v + 1);
   });
 
@@ -188,10 +200,11 @@ export function ButterflyGroup({
             spriteRefs.current[i] = el;
           }}
           position={[b.x, b.y, b.z]}
-          scale={[BUTTERFLY_SCALE, BUTTERFLY_SCALE, 1]}
+          scale={[BUTTERFLY_SCALE * BUTTERFLY_ASPECT, BUTTERFLY_SCALE, 1]}
         >
           <spriteMaterial
             map={texture}
+            color={new THREE.Color(0.6, 0.6, 0.6)}
             transparent
             depthWrite={false}
           />

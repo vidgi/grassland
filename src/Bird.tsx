@@ -554,7 +554,7 @@ export function DwellerGroup({ bounds, grassPositionsRef, dwellerCountRef }: Dwe
           position={[d.x, d.y, d.z]}
           scale={[(d.flip ? -1 : 1) * DWELLER_SCALE * BIRD_ASPECT, DWELLER_SCALE, 1]}
         >
-          <spriteMaterial map={texture} color={new THREE.Color(0.55, 0.55, 0.55)} transparent depthWrite={false} />
+          <spriteMaterial map={texture} color={new THREE.Color(0.85, 0.85, 0.85)} transparent depthWrite={false} />
         </sprite>
       ))}
     </>

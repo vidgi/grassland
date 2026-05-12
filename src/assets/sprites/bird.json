@@ -3,10 +3,10 @@
   "frames": 2,
   "frameWidth": 786,
   "frameHeight": 890,
-  "fps": 4.902,
+  "fps": 6.0976,
   "frameDurationsMs": [
-    204,
-    204
+    164,
+    164
   ],
   "image": "bird.png"
 }

@@ -1,0 +1,12 @@
+{
+  "name": "butterfly",
+  "frames": 2,
+  "frameWidth": 435,
+  "frameHeight": 299,
+  "fps": 5.0761,
+  "frameDurationsMs": [
+    197,
+    197
+  ],
+  "image": "butterfly.png"
+}
